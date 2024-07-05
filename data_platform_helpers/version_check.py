@@ -54,7 +54,7 @@ PREFIX_DIR = "/var/lib/juju/agents/"
 LOCAL_BUILT_CHARM_PREFIX = "local"
 
 
-def get_charm_revision(unit: Unit) -> int:
+def get_charm_revision(unit: Unit, local_version: int = 0) -> int:
     """Returns the charm revision.
 
     TODO: Keep this until ops framework supports: https://github.com/canonical/operator/issues/1255
@@ -67,7 +67,7 @@ def get_charm_revision(unit: Unit) -> int:
     # https://chat.canonical.com/canonical/pl/ro9935ayxbyyxn9hn6opy4f4xw
     if charm_path.split(":")[0] == LOCAL_BUILT_CHARM_PREFIX:
         logger.debug("Charm is locally built. Cannot determine revision number.")
-        return 0
+        return local_version
 
     # charm_path is of the format ch:amd64/jammy/<charm-name>-<revision number>
     revision = charm_path.split("-")[-1]
