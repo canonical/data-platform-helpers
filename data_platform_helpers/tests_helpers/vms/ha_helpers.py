@@ -3,7 +3,8 @@
 
 import subprocess
 from pytest_operator.plugin import OpsTest
-from tenacity import retry, stop_after_attempt, wait_fixed
+import tenacity
+import yaml
 
 
 def cut_network_from_unit_with_ip_change(machine_name: str) -> None:
@@ -65,7 +66,7 @@ def is_machine_reachable_from(origin_machine: str, target_machine: str) -> bool:
         return False
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(15))
+@tenacity.retry(stop=tenacity.stop_after_attempt(60), wait=tenacity.wait_fixed(15))
 def assert_ip_different_after_retore(model_name: str, hostname: str, old_ip: str) -> bool:
     """Wait until network is restored.
 
@@ -77,7 +78,7 @@ def assert_ip_different_after_retore(model_name: str, hostname: str, old_ip: str
     assert get_unit_ip(model_name, hostname) == old_ip, "IP address has not changed yet."
 
 
-@retry(stop=stop_after_attempt(20), wait=wait_fixed(15))
+@tenacity.retry(stop=tenacity.stop_after_attempt(20), wait=tenacity.wait_fixed(15))
 async def wait_network_restore(ops_test: OpsTest, unit_name: str) -> None:
     """Wait until network is restored.
 
@@ -112,6 +113,32 @@ async def get_unit_ip(ops_test: OpsTest, unit_name: str) -> str:
     return address
 
 
-# TODO add these remaining network helpers:
-# get_controller_machine
-# wait_network_restore
+async def get_controller_machine(ops_test: OpsTest) -> str:
+    """Return controller machine hostname.
+
+    Args:
+        ops_test: The ops test framework instance
+    Returns:
+        Controller hostname (str)
+    """
+    _, raw_controller, _ = await ops_test.juju("show-controller")
+
+    controller = yaml.safe_load(raw_controller.strip())
+
+    return [
+        machine.get("instance-id")
+        for machine in controller[ops_test.controller_name]["controller-machines"].values()
+    ][0]
+
+
+@tenacity.retry(stop=tenacity.stop_after_attempt(60), wait=tenacity.wait_fixed(15), reraise=True)
+def wait_network_restore_with_ip_change(model_name: str, hostname: str, old_ip: str) -> None:
+    """Wait until network is restored.
+
+    Args:
+        model_name: The name of the model
+        hostname: The name of the instance
+        old_ip: old registered IP address
+    """
+    if get_unit_ip(model_name, hostname) == old_ip:
+        raise Exception("Network not restored, IP address has not changed yet.")
