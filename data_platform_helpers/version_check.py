@@ -54,7 +54,7 @@ PREFIX_DIR = "/var/lib/juju/agents/"
 LOCAL_BUILT_CHARM_PREFIX = "local"
 
 
-def get_charm_revision(unit: Unit, local_version: int = 0) -> int:
+def get_charm_revision(unit: Unit, local_version: str = "0") -> str:
     """Returns the charm revision.
 
     TODO: Keep this until ops framework supports: https://github.com/canonical/operator/issues/1255
@@ -71,7 +71,7 @@ def get_charm_revision(unit: Unit, local_version: int = 0) -> int:
 
     # charm_path is of the format ch:amd64/jammy/<charm-name>-<revision number>
     revision = charm_path.split("-")[-1]
-    return int(revision)
+    return revision
 
 
 class CrossAppVersionChecker(Object):
@@ -80,7 +80,7 @@ class CrossAppVersionChecker(Object):
     def __init__(
         self,
         charm: CharmBase,
-        version: int,
+        version: str,
         relations_to_check: List[str],
         version_validity_range: Optional[Dict] = None,
     ) -> None:
@@ -113,7 +113,7 @@ class CrossAppVersionChecker(Object):
         # function `get_invalid_versions`
         self.version_validity_range = version_validity_range
 
-    def get_invalid_versions(self) -> List[Tuple[str, int]]:
+    def get_invalid_versions(self) -> List[Tuple[str, str]]:
         """Returns a list of (app name, version number) pairs, if the version number mismatches.
 
         Mismatches are decided based on version_validity_range, if version_validity_range is not
@@ -127,14 +127,14 @@ class CrossAppVersionChecker(Object):
             for relation_name in self.relations_to_check:
                 for relation in self.charm.model.relations[relation_name]:
                     related_version = relation.data[relation.app][VERSION_CONST]
-                    if int(related_version) != self.version:
-                        invalid_relations.append((relation.app.name, int(related_version)))
+                    if related_version != self.version:
+                        invalid_relations.append((relation.app.name, related_version))
         except KeyError:
             raise NoVersionError(f"Expected {relation.app.name} to have version info.")
 
         return invalid_relations
 
-    def get_version_of_related_app(self, related_app_name: str) -> int:
+    def get_version_of_related_app(self, related_app_name: str) -> str:
         """Returns a int for the version of the related app.
 
         Raises:
@@ -144,7 +144,7 @@ class CrossAppVersionChecker(Object):
             for relation_name in self.relations_to_check:
                 for rel in self.charm.model.relations[relation_name]:
                     if rel.app.name == related_app_name:
-                        return int(rel.data[rel.app][VERSION_CONST])
+                        return rel.data[rel.app][VERSION_CONST]
         except KeyError:
             pass
 
@@ -177,18 +177,24 @@ class CrossAppVersionChecker(Object):
 
         for relation_name in self.relations_to_check:
             for rel in self.charm.model.relations[relation_name]:
-                rel.data[self.charm.model.app][VERSION_CONST] = str(self.version)
-                rel.data[self.charm.model.app][DEPLOYMENT_TYPE] = str(self.get_deployment_prefix())
+                rel.data[self.charm.model.app][VERSION_CONST] = self.version
+                rel.data[self.charm.model.app][DEPLOYMENT_TYPE] = str(
+                    self.get_deployment_prefix()
+                )
 
-    def set_version_on_related_app(self, relation_name: str, related_app_name: str) -> None:
+    def set_version_on_related_app(
+        self, relation_name: str, related_app_name: str
+    ) -> None:
         """Sets the version number across for a specified relation on a specified app."""
         if not self.charm.unit.is_leader():
             return
 
         for rel in self.charm.model.relations[relation_name]:
             if rel.app.name == related_app_name:
-                rel.data[self.charm.model.app][VERSION_CONST] = str(self.version)
-                rel.data[self.charm.model.app][DEPLOYMENT_TYPE] = str(self.get_deployment_prefix())
+                rel.data[self.charm.model.app][VERSION_CONST] = self.version
+                rel.data[self.charm.model.app][DEPLOYMENT_TYPE] = str(
+                    self.get_deployment_prefix()
+                )
 
     def set_version_on_relation_created(self, event) -> None:
         """Shares the charm's revision to the newly integrated application.
@@ -225,7 +231,10 @@ class CrossAppVersionChecker(Object):
             for relation_name in self.relations_to_check:
                 for rel in self.charm.model.relations[relation_name]:
                     if rel.app.name == app_name:
-                        return rel.data[rel.app][DEPLOYMENT_TYPE] == LOCAL_BUILT_CHARM_PREFIX
+                        return (
+                            rel.data[rel.app][DEPLOYMENT_TYPE]
+                            == LOCAL_BUILT_CHARM_PREFIX
+                        )
         except KeyError:
             pass
 
