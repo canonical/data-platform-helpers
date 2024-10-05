@@ -2,3 +2,4 @@ venv
 *.py[co]
 __pycache__
 dist/*
+requirements.txt

@@ -16,7 +16,9 @@ def cut_network_from_unit_with_ip_change(machine_name: str) -> None:
     subprocess.check_call(cut_network_command.split())
 
 
-async def cut_network_from_unit_without_ip_change(ops_test: OpsTest, machine_name: str) -> None:
+async def cut_network_from_unit_without_ip_change(
+    ops_test: OpsTest, machine_name: str
+) -> None:
     """Cut network from a lxc container (without causing the change of the unit IP address)."""
 
     override_command = f"lxc config device override {machine_name} eth0"
@@ -28,7 +30,9 @@ async def cut_network_from_unit_without_ip_change(ops_test: OpsTest, machine_nam
 
     limit_set_command = f"lxc config device set {machine_name} eth0 limits.egress=0kbit"
     subprocess.check_call(limit_set_command.split())
-    limit_set_command = f"lxc config device set {machine_name} eth0 limits.ingress=1kbit"
+    limit_set_command = (
+        f"lxc config device set {machine_name} eth0 limits.ingress=1kbit"
+    )
     subprocess.check_call(limit_set_command.split())
     limit_set_command = f"lxc config device set {machine_name} eth0 limits.priority=10"
     subprocess.check_call(limit_set_command.split())
