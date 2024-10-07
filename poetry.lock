@@ -498,7 +498,6 @@ prompt-toolkit = ">=3.0.30,<3.0.37 || >3.0.37,<3.1.0"
 pygments = ">=2.4.0"
 stack-data = "*"
 traitlets = ">=5"
-typing-extensions = {version = "*", markers = "python_version < \"3.10\""}
 
 [package.extras]
 all = ["black", "curio", "docrepr", "ipykernel", "ipyparallel", "ipywidgets", "matplotlib", "matplotlib (!=3.2.0)", "nbconvert", "nbformat", "notebook", "numpy (>=1.21)", "pandas", "pytest (<7)", "pytest (<7.1)", "pytest-asyncio", "qtconsole", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "stack-data", "testpath", "trio", "typing-extensions"]
@@ -729,13 +728,13 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "ops"
-version = "2.16.0"
+version = "2.17.0"
 description = "The Python library behind great charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ops-2.16.0-py3-none-any.whl", hash = "sha256:82d982d08035f059a28129139547b62c9326d4a25e5421bb3fd8d9145585b09d"},
-    {file = "ops-2.16.0.tar.gz", hash = "sha256:c4405185744c82589fca4752a76cd7eabd667cf2d3f07d2700b82777186b8de9"},
+    {file = "ops-2.17.0-py3-none-any.whl", hash = "sha256:b6b7cebd1897bc1ea26312f1ddece693fbb5b392d5a395d5deef59204b98925e"},
+    {file = "ops-2.17.0.tar.gz", hash = "sha256:04f298bed94bfde3dd38ba39d309cda03d595273e815add6d0affb110cacb77b"},
 ]
 
 [package.dependencies]
@@ -743,7 +742,8 @@ PyYAML = "==6.*"
 websocket-client = "==1.*"
 
 [package.extras]
-docs = ["canonical-sphinx-extensions", "furo", "linkify-it-py", "myst-parser", "pyspelling", "sphinx (>=8.0.0,<8.1.0)", "sphinx-autobuild", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page", "sphinx-tabs", "sphinxcontrib-jquery", "sphinxext-opengraph"]
+docs = ["canonical-sphinx-extensions", "furo", "linkify-it-py", "myst-parser", "ops-scenario (>=7.0.5,<8)", "pyspelling", "sphinx (>=8.0.0,<8.1.0)", "sphinx-autobuild", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page", "sphinx-tabs", "sphinxcontrib-jquery", "sphinxext-opengraph"]
+testing = ["ops-scenario (>=7.0.5,<8)"]
 
 [[package]]
 name = "packaging"
@@ -1475,5 +1475,5 @@ tests = ["pytest_operator"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.8"
-content-hash = "7c4c50b5b72b99404cda9412f8c53f96c46937ae0c372f0fb1251a54de456626"
+python-versions = "^3.10"
+content-hash = "7991d30280703b43a8322969c93fec395b99946dc334d52da1056ab1c2fefae3"
