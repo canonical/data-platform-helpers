@@ -5,29 +5,29 @@ description = ""
 authors = ["Mia Altieri <mgaltier200@gmail.com>"]
 readme = "README.md"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-ops = "^2.17.0"
-tenacity = "*"
-pytest_operator = "*"
+# [tool.poetry.dependencies]
+# python = "^3.10"
+# ops = "^2.17.0"
+# tenacity = "*"
+# pytest_operator = "*"
 
-[tool.poetry.extras]
-tests = ["pytest_operator"]
+# [tool.poetry.extras]
+# tests = ["pytest_operator"]
 
-all = ["pytest_operator"]
+# all = ["pytest_operator"]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+# [build-system]
+# requires = ["poetry-core"]
+# build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.group.format]
-optional = true
+# [tool.poetry.group.format]
+# optional = true
 
-[tool.poetry.group.format.dependencies]
-ruff = "*"
+# [tool.poetry.group.format.dependencies]
+# ruff = "*"
 
-[tool.poetry.group.lint]
-optional = true
+# [tool.poetry.group.lint]
+# optional = true
 
-[tool.poetry.group.lint.dependencies]
-codespell = "*"
+# [tool.poetry.group.lint.dependencies]
+# codespell = "*"
