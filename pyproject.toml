@@ -4,3 +4,6 @@ version = "0.1.4"
 description = ""
 authors = ["Mia Altieri <mgaltier200@gmail.com>"]
 readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
