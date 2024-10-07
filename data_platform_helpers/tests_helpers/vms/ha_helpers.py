@@ -64,14 +64,18 @@ def is_machine_reachable_from(origin_machine: str, target_machine: str) -> bool:
         target_machine: hostname of the machine to test connection to
     """
     try:
-        subprocess.check_call(f"lxc exec {origin_machine} -- ping -c 5 {target_machine}".split())
+        subprocess.check_call(
+            f"lxc exec {origin_machine} -- ping -c 5 {target_machine}".split()
+        )
         return True
     except subprocess.CalledProcessError:
         return False
 
 
 @tenacity.retry(stop=tenacity.stop_after_attempt(60), wait=tenacity.wait_fixed(15))
-def assert_ip_different_after_retore(model_name: str, hostname: str, old_ip: str) -> bool:
+def assert_ip_different_after_retore(
+    model_name: str, hostname: str, old_ip: str
+) -> bool:
     """Wait until network is restored.
 
     Args:
@@ -79,7 +83,9 @@ def assert_ip_different_after_retore(model_name: str, hostname: str, old_ip: str
         hostname: The name of the instance
         old_ip: old registered IP address
     """
-    assert get_unit_ip(model_name, hostname) == old_ip, "IP address has not changed yet."
+    assert (
+        get_unit_ip(model_name, hostname) == old_ip
+    ), "IP address has not changed yet."
 
 
 @tenacity.retry(stop=tenacity.stop_after_attempt(20), wait=tenacity.wait_fixed(15))
@@ -113,7 +119,9 @@ async def get_unit_ip(ops_test: OpsTest, unit_name: str) -> str:
     app_name = unit_name.split("/")[0]
     unit_num = unit_name.split("/")[1]
     status = await ops_test.model.get_status()  # noqa: F821
-    address = status["applications"][app_name]["units"][f"{app_name}/{unit_num}"]["public-address"]
+    address = status["applications"][app_name]["units"][f"{app_name}/{unit_num}"][
+        "public-address"
+    ]
     return address
 
 
@@ -131,12 +139,18 @@ async def get_controller_machine(ops_test: OpsTest) -> str:
 
     return [
         machine.get("instance-id")
-        for machine in controller[ops_test.controller_name]["controller-machines"].values()
+        for machine in controller[ops_test.controller_name][
+            "controller-machines"
+        ].values()
     ][0]
 
 
-@tenacity.retry(stop=tenacity.stop_after_attempt(60), wait=tenacity.wait_fixed(15), reraise=True)
-def wait_network_restore_with_ip_change(model_name: str, hostname: str, old_ip: str) -> None:
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(60), wait=tenacity.wait_fixed(15), reraise=True
+)
+def wait_network_restore_with_ip_change(
+    model_name: str, hostname: str, old_ip: str
+) -> None:
     """Wait until network is restored.
 
     Args:
