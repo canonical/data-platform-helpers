@@ -158,5 +158,5 @@ def wait_network_restore_with_ip_change(
         hostname: The name of the instance
         old_ip: old registered IP address
     """
-    if get_unit_ip(model_name, hostname) == old_ip:
+    if await get_unit_ip(model_name, hostname) == old_ip:
         raise Exception("Network not restored, IP address has not changed yet.")
