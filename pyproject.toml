@@ -6,10 +6,10 @@ authors = ["Mia Altieri <mgaltier200@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 ops = "^2.15.0"
-tenacity = "^9.0.0"
-pytest_operator = { version = "0.36.0", optional = true }
+tenacity = "*"
+pytest_operator = "*"
 
 [tool.poetry.extras]
 tests = ["pytest_operator"]
@@ -24,10 +24,10 @@ build-backend = "poetry.core.masonry.api"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = ">=0.6.8"
+ruff = "*"
 
 [tool.poetry.group.lint]
 optional = true
 
 [tool.poetry.group.lint.dependencies]
-codespell = ">=2.2.2"
+codespell = "*"

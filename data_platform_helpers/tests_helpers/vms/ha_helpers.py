@@ -18,7 +18,7 @@ def cut_network_from_unit_with_ip_change(machine_name: str) -> None:
     subprocess.check_call(cut_network_command.split())
 
 
-async def cut_network_from_unit_without_ip_change(
+def cut_network_from_unit_without_ip_change(
     ops_test: OpsTest, machine_name: str
 ) -> None:
     """Cut network from a lxc container (without causing the change of the unit IP address)."""
@@ -40,13 +40,13 @@ async def cut_network_from_unit_without_ip_change(
     subprocess.check_call(limit_set_command.split())
 
 
-async def restore_network_for_unit_with_ip_change(machine_name: str) -> None:
+def restore_network_for_unit_with_ip_change(machine_name: str) -> None:
     """Restore network from a lxc container by removing mask from eth0."""
     restore_network_command = f"lxc config device remove {machine_name} eth0"
     subprocess.check_call(restore_network_command.split())
 
 
-async def restore_network_for_unit_without_ip_change(machine_name: str) -> None:
+def restore_network_for_unit_without_ip_change(machine_name: str) -> None:
     """Restore network from a lxc container (without causing the change of the unit IP address)."""
     limit_set_command = f"lxc config device set {machine_name} eth0 limits.egress="
     subprocess.check_call(limit_set_command.split())
