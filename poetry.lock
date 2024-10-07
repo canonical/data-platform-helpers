@@ -1219,6 +1219,21 @@ pure-eval = "*"
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
+name = "tenacity"
+version = "9.0.0"
+description = "Retry code until it succeeds"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tenacity-9.0.0-py3-none-any.whl", hash = "sha256:93de0c98785b27fcf659856aa9f54bfbd399e29969b0621bc7f762bd441b4539"},
+    {file = "tenacity-9.0.0.tar.gz", hash = "sha256:807f37ca97d62aa361264d497b0e31e92b8027044942bfa756160d908320d73b"},
+]
+
+[package.extras]
+doc = ["reno", "sphinx"]
+test = ["pytest", "tornado (>=4.5)", "typeguard"]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -1427,4 +1442,4 @@ tests = ["pytest_operator"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "74c7f996e27edf2d8d2b970f7e1d20dfa677e7f75ec2f7fdc5bbec1b4c4b64a8"
+content-hash = "3391690a70cd9a74770f72f737440d1ff9d265effc8464acedaa7767d0dbf9ee"
