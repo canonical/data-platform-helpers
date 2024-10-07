@@ -148,7 +148,7 @@ async def get_controller_machine(ops_test: OpsTest) -> str:
 @tenacity.retry(
     stop=tenacity.stop_after_attempt(60), wait=tenacity.wait_fixed(15), reraise=True
 )
-def wait_network_restore_with_ip_change(
+async def wait_network_restore_with_ip_change(
     model_name: str, hostname: str, old_ip: str
 ) -> None:
     """Wait until network is restored.
