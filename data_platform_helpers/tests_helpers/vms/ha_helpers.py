@@ -18,9 +18,7 @@ def cut_network_from_unit_with_ip_change(machine_name: str) -> None:
     subprocess.check_call(cut_network_command.split())
 
 
-def cut_network_from_unit_without_ip_change(
-    ops_test: OpsTest, machine_name: str
-) -> None:
+def cut_network_from_unit_without_ip_change(machine_name: str) -> None:
     """Cut network from a lxc container (without causing the change of the unit IP address)."""
 
     override_command = f"lxc config device override {machine_name} eth0"
