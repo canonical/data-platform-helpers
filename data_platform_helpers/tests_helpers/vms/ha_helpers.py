@@ -18,9 +18,7 @@ def cut_network_from_unit_with_ip_change(machine_name: str) -> None:
     subprocess.check_call(cut_network_command.split())
 
 
-async def cut_network_from_unit_without_ip_change(
-    ops_test: OpsTest, machine_name: str
-) -> None:
+def cut_network_from_unit_without_ip_change(machine_name: str) -> None:
     """Cut network from a lxc container (without causing the change of the unit IP address)."""
 
     override_command = f"lxc config device override {machine_name} eth0"
@@ -40,13 +38,13 @@ async def cut_network_from_unit_without_ip_change(
     subprocess.check_call(limit_set_command.split())
 
 
-async def restore_network_for_unit_with_ip_change(machine_name: str) -> None:
+def restore_network_for_unit_with_ip_change(machine_name: str) -> None:
     """Restore network from a lxc container by removing mask from eth0."""
     restore_network_command = f"lxc config device remove {machine_name} eth0"
     subprocess.check_call(restore_network_command.split())
 
 
-async def restore_network_for_unit_without_ip_change(machine_name: str) -> None:
+def restore_network_for_unit_without_ip_change(machine_name: str) -> None:
     """Restore network from a lxc container (without causing the change of the unit IP address)."""
     limit_set_command = f"lxc config device set {machine_name} eth0 limits.egress="
     subprocess.check_call(limit_set_command.split())
@@ -148,7 +146,7 @@ async def get_controller_machine(ops_test: OpsTest) -> str:
 @tenacity.retry(
     stop=tenacity.stop_after_attempt(60), wait=tenacity.wait_fixed(15), reraise=True
 )
-def wait_network_restore_with_ip_change(
+async def wait_network_restore_with_ip_change(
     model_name: str, hostname: str, old_ip: str
 ) -> None:
     """Wait until network is restored.
@@ -158,5 +156,5 @@ def wait_network_restore_with_ip_change(
         hostname: The name of the instance
         old_ip: old registered IP address
     """
-    if get_unit_ip(model_name, hostname) == old_ip:
+    if await get_unit_ip(model_name, hostname) == old_ip:
         raise Exception("Network not restored, IP address has not changed yet.")
