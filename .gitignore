@@ -1,5 +1,7 @@
 venv
+env
 *.py[co]
 __pycache__
 dist/*
 requirements.txt
+.vscode
