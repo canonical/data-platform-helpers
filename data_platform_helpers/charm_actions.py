@@ -20,10 +20,12 @@ async def get_password(
     app_name: str,
     unit_index: int = 0,
     action_name: str = "get-password",
-    username: str = "operator",
+    username: str | None = "operator",
 ) -> dict:
     """Get password corresponding to the given username."""
-    kwargs = {"username": username}
+    kwargs = {}
+    if username is not None:
+        kwargs.update({"username": username})
     result = await run_action(
         ops_test=ops_test,
         action_name=action_name,
@@ -31,7 +33,7 @@ async def get_password(
         unit_index=unit_index,
         **kwargs,
     )
-    password = result.results.get("password")
+    password = result.get("password")
     return password
 
 
@@ -41,10 +43,12 @@ async def set_password(
     app_name: str,
     unit_index: int = 0,
     action_name: str = "get-password",
-    username: str = "operator",
+    username: str | None = "operator",
 ) -> dict:
     """Set password for the given username."""
-    kwargs = {"username": username, "password": password}
+    kwargs = {"password": password}
+    if username is not None:
+        kwargs.update({"username": username})
     result = await run_action(
         ops_test=ops_test,
         action_name=action_name,
@@ -52,5 +56,5 @@ async def set_password(
         unit_index=unit_index,
         **kwargs,
     )
-    password = result.results.get("password")
+    password = result.get("password")
     return password
