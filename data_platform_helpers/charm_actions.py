@@ -42,7 +42,7 @@ async def set_password(
     password: str,
     app_name: str,
     unit_index: int = 0,
-    action_name: str = "get-password",
+    action_name: str = "set-password",
     username: str | None = "operator",
 ) -> dict:
     """Set password for the given username."""
