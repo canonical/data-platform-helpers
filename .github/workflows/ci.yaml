@@ -10,10 +10,9 @@ on:
   workflow_call:
   pull_request:
   schedule:
-    - cron: '53 0 * * *' # Daily at 00:53 UTC
+    - cron: "53 0 * * *" # Daily at 00:53 UTC
 
-# TODO Add linting back once we fix the dependencies
-# jobs:
-#   lint:
-#     name: Lint
-#     uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v22.0.0
+jobs:
+  lint:
+    name: Lint
+    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v22.0.0

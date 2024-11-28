@@ -7,3 +7,27 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+ops = "^2.15.0"
+tenacity = "^9.0.0"
+pytest_operator = { version = "0.36.0", optional = true }
+
+[tool.poetry.extras]
+tests = ["pytest_operator"]
+
+all = ["pytest_operator"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.format]
+optional = true
+
+[tool.poetry.group.format.dependencies]
+ruff = ">=0.6.8"
+
+[tool.poetry.group.lint]
+optional = true
+
+[tool.poetry.group.lint.dependencies]
+codespell = ">=2.2.2"
