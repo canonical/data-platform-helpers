@@ -40,7 +40,5 @@ jobs:
           channel: 1.30-strict/stable
           microk8s-group: snap_microk8s
           microk8s-addons: "rbac hostpath-storage dns"
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
       - name: Run integration tests
         run: tox run -e ${{ matrix.tox-environments }}

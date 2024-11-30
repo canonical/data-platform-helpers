@@ -17,7 +17,7 @@ def test_charm():
             "entity_url": "postgresql-k8s",
             "channel": "14/stable",
             "series": "jammy",
-            "revision": 445,
+            "revision": 444,
             "num_units": 1,
             "application_name": "postgresql",
             "trust": True,
