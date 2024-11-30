@@ -6,8 +6,8 @@ authors = ["Mia Altieri <mgaltier200@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
-ops = "^2.15.0"
+python = "^3.8"
+ops = ">=2.4.0"
 pytest_operator = { version = "0.36.0", optional = true }
 
 [tool.poetry.extras]
@@ -30,6 +30,15 @@ optional = true
 
 [tool.poetry.group.lint.dependencies]
 codespell = ">=2.2.2"
+pyright = ">=1.1.385"
+
+[tool.pyright]
+include = ["data_platform_helpers"]
+extraPaths = ["tests"]
+pythonVersion = "3.8"
+pythonPlatform = "All"
+typeCheckingMode = "basic"
+reportMissingModuleSource = true
 
 [tool.poetry.group.integration]
 optional = true
