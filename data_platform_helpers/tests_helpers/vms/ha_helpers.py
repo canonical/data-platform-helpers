@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 import subprocess
+
 from pytest_operator.plugin import OpsTest
 
 
@@ -20,7 +21,6 @@ async def cut_network_from_unit_without_ip_change(
     ops_test: OpsTest, machine_name: str
 ) -> None:
     """Cut network from a lxc container (without causing the change of the unit IP address)."""
-
     override_command = f"lxc config device override {machine_name} eth0"
     try:
         subprocess.check_call(override_command.split())

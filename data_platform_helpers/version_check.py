@@ -41,7 +41,6 @@ How to use:
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
 
 from ops.charm import CharmBase
 from ops.framework import Object
@@ -82,8 +81,8 @@ class CrossAppVersionChecker(Object):
         self,
         charm: CharmBase,
         version: str,
-        relations_to_check: List[str],
-        version_validity_range: Optional[Dict] = None,
+        relations_to_check: list[str],
+        version_validity_range: dict | None = None,
     ) -> None:
         """Constructor for CrossAppVersionChecker.
 
@@ -114,7 +113,7 @@ class CrossAppVersionChecker(Object):
         # function `get_invalid_versions`
         self.version_validity_range = version_validity_range
 
-    def get_invalid_versions(self) -> List[Tuple[str, str]]:
+    def get_invalid_versions(self) -> list[tuple[str, str]]:
         """Returns a list of (app name, version number) pairs, if the version number mismatches.
 
         Mismatches are decided based on version_validity_range, if version_validity_range is not
