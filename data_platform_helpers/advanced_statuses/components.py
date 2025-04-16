@@ -11,7 +11,6 @@ class <>Manager(ManagerStatusProtocol):
             charm,
             'my-component',
             'status-peers',
-            lambda scope: self.compute_statuses(scope)
         )
 
     def compute_statuses(self, scope: Scope):
@@ -20,9 +19,8 @@ class <>Manager(ManagerStatusProtocol):
 """
 
 from bisect import insort_right
-from collections.abc import Callable
 from logging import getLogger
-from typing import Literal, get_args
+from typing import Literal
 
 from ops import Object, Relation
 from ops.model import RelationDataContent
@@ -52,7 +50,6 @@ class ComponentStatuses(Object):
         parent: Object,
         name: str,
         status_relation_name: str,
-        compute_statuses_callback: Callable[[Scope], StatusObjectList],
     ) -> None:
         """Initialiser of the Component Statuses.
 
@@ -66,23 +63,10 @@ class ComponentStatuses(Object):
         the statuses by component.
 
         The parent is used to provide an access to Ops.
-
-        The compute_statuses_callback is used to allow the component_statuses
-        to compute all the statuses in a proper fashion.
         """
         super().__init__(parent=parent, key=f"status-{name}")
         self.name = name
         self.status_relation_name = status_relation_name
-        self.compute_statuses = compute_statuses_callback
-
-    def recompute_statuses(self):
-        """Useful function to recompute all statuses of a component."""
-        for scope in get_args(Scope):
-            self.clear(scope)
-            statuses = self.compute_statuses(scope)
-            logger.info(f"Recomputed statuses for {scope=}: {statuses}")
-            for status in statuses:
-                self.add(status=status, scope=scope)
 
     @property
     def relation(self) -> Relation | None:

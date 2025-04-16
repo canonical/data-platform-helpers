@@ -28,7 +28,6 @@ class OtherComponent(Object, ManagerStatusProtocol):
             self,
             "other-component",
             status_relation_name="status-peers",
-            compute_statuses_callback=lambda scope: self.compute_statuses(scope),
         )
 
     def compute_statuses(self, scope: Scope) -> list[StatusObject]:
@@ -55,13 +54,10 @@ class MyCharm(CharmBase, ManagerStatusProtocol):
             self,
             name="my-charm",
             status_relation_name="status-peers",
-            compute_statuses_callback=lambda scope: self.compute_statuses(scope),
         )
         self.other_component = OtherComponent(self)
         self.framework.observe(self.on.update_status, self._on_update_status)
-        self.status_handler = StatusHandler(
-            self, self.component_statuses, self.other_component.component_statuses
-        )
+        self.status_handler = StatusHandler(self, self, self.other_component)
 
     def _on_update_status(self, event):
         self._stored.call_number += 1
@@ -107,18 +103,12 @@ ACTIONS = {
 
 @pytest.fixture
 def test_charm_context() -> (
-    Generator[
-        tuple[testing.Context[MyCharm], testing.State, testing.PeerRelation], Any, Any
-    ]
+    Generator[tuple[testing.Context[MyCharm], testing.State, testing.PeerRelation], Any, Any]
 ):
     ctx = testing.Context(MyCharm, meta=METADATA, actions=ACTIONS)
-    relation = testing.PeerRelation(
-        id=1, endpoint="status-peers", interface="status-peers"
-    )
+    relation = testing.PeerRelation(id=1, endpoint="status-peers", interface="status-peers")
     stored_state = testing.StoredState(name="_stored", content={"call_number": 0})
-    state = testing.State(
-        leader=True, relations=[relation], stored_states=[stored_state]
-    )
+    state = testing.State(leader=True, relations=[relation], stored_states=[stored_state])
     yield ctx, state, relation
 
 

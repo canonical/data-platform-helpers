@@ -37,10 +37,12 @@ import itertools
 import json
 from functools import cached_property, lru_cache
 from logging import getLogger
+from typing import get_args
 
+from ops import Application
 from ops.charm import ActionEvent, CharmBase, CollectStatusEvent, UpdateStatusEvent
 from ops.framework import Object
-from ops.model import ActiveStatus, StatusBase
+from ops.model import ActiveStatus, StatusBase, Unit
 from prettytable import PrettyTable
 
 from data_platform_helpers.advanced_statuses.components import (
@@ -51,6 +53,7 @@ from data_platform_helpers.advanced_statuses.models import (
     StatusObject,
     StatusObjectDict,
 )
+from data_platform_helpers.advanced_statuses.protocol import ManagerStatusProtocol
 from data_platform_helpers.advanced_statuses.types import Scope
 
 logger = getLogger(__name__)
@@ -62,18 +65,25 @@ class StatusHandler(Object):
     This is according to DA161 and DA147.
     """
 
-    def __init__(self, charm: CharmBase, *components_in_priorty_order: ComponentStatuses) -> None:
+    def __init__(
+        self, charm: CharmBase, *components_in_priorty_order: ManagerStatusProtocol
+    ) -> None:
         super().__init__(parent=charm, key="status-handler")
         self.charm = charm
-        self.components: tuple[ComponentStatuses, ...] = components_in_priorty_order
+        self.components: tuple[ManagerStatusProtocol, ...] = components_in_priorty_order
         self.framework.observe(self.charm.on.collect_unit_status, self._on_collect_unit_status)
         self.framework.observe(self.charm.on.collect_app_status, self._on_collect_app_status)
         self.framework.observe(self.charm.on.status_detail_action, self._on_status_detail_action)
         self.framework.observe(self.charm.on.update_status, self._on_update_status)
 
     @cached_property
+    def components_statuses(self) -> list[ComponentStatuses]:
+        """All components statuses."""
+        return [component.component_statuses for component in self.components]
+
+    @cached_property
     def _component_names(self) -> list[str]:
-        return [component.name for component in self.components]
+        return [component.name for component in self.components_statuses]
 
     @lru_cache
     def _component_priority(self, component_name: str):
@@ -82,14 +92,27 @@ class StatusHandler(Object):
             raise ValueError(f"Invalid component name: {component_name}")
         return self._component_names.index(component_name)
 
+    def object(self, scope: Scope) -> Application | Unit:
+        """Return the correct component to use for displaying status."""
+        match scope:
+            case "app":
+                return self.charm.app
+            case "unit":
+                return self.charm.unit
+
     def set_running_status(
         self,
         status: StatusObject,
         scope: Scope,
+        is_action: bool = False,
         # required to save async status
         async_status_component: ComponentStatuses | None = None,
     ):
         """Immediately sets a running status.
+
+        When called from an action, set the `is_action` flag to True so that
+        the status will be displayed no matter what, even if there are some
+        approved_critical_component statuses displayed.
 
         Blocking running statuses are cleared at the end of the hook they are set in.
 
@@ -101,20 +124,33 @@ class StatusHandler(Object):
 
         Raises: if StatusObject isn't a running status.
         """
-        match status.running:
-            case None:
+        statuses = self._get_critical_statuses(scope)
+        match status.running, statuses, is_action:
+            case None, _, _:
                 raise ValueError(f"Status {status} is not a running status.")
-            case "async":
-                self.charm.unit.status = status.status
+            case "async", [], _:
+                self.object(scope).status = status.status
                 if async_status_component is None:
                     raise ValueError("No status component provided to store the async status.")
                 async_status_component.add(status, scope)
-            case "blocking":
-                self.charm.unit.status = status.status
+            case "async", _, _:
+                # We're not displaying the status because there's a more important status.
+                logger.info("not displaying status %s", status.model_dump())
+            case "blocking", [], _:
+                self.object(scope).status = status.status
+            case "blocking", _, False:
+                # We're not displaying the status because there's a more important status.
+                logger.info("not displaying status %s", status.model_dump())
+            case "blocking", _, True:
+                # We have critical statuses but this is an action so we
+                # override this status and log.
+                logger.info("Overriding critical status %s", statuses)
+                self.object(scope).status = status.status
 
+    @lru_cache
     def _get_sorted_statuses(self, scope: Scope) -> list[tuple[str, StatusObject]]:
         statuses_by_components = StatusObjectDict.model_validate(
-            {component.name: component.get(scope) for component in self.components}
+            {component.name: component.get(scope) for component in self.components_statuses}
         )
         current_statuses = [
             (component, item)
@@ -133,13 +169,15 @@ class StatusHandler(Object):
             ),
         )
 
+    def _get_critical_statuses(self, scope: Scope) -> list[tuple[str, StatusObject]]:
+        """Gets all critical statuses for all components."""
+        all_statuses = self._get_sorted_statuses(scope)
+        return [status for status in all_statuses if status[1].approved_critical_component]
+
     def _on_scope_statuses(self, scope: Scope, event: CollectStatusEvent):
         """The core logic of the status handling for a given scope."""
         all_statuses = self._get_sorted_statuses(scope)
-
-        critical_statuses = [
-            status for status in all_statuses if status[1].approved_critical_component
-        ]
+        critical_statuses = self._get_critical_statuses(scope)
 
         if critical_statuses:
             # When we have critical statuses, we display it right away.
@@ -187,6 +225,16 @@ class StatusHandler(Object):
         """
         self._on_scope_statuses(scope="app", event=event)
 
+    def _recompute_statuses(self):
+        """Recompute all statuses for all components."""
+        for manager in self.components:
+            for scope in get_args(Scope):
+                manager.component_statuses.clear(scope)
+                statuses = manager.compute_statuses(scope)
+                logger.info(f"Recomputed statuses for {scope=}: {statuses}")
+                for status in statuses:
+                    manager.component_statuses.add(status=status, scope=scope)
+
     def _on_status_detail_action(self, event: ActionEvent) -> None:
         """Handles status-detail action.
 
@@ -196,8 +244,7 @@ class StatusHandler(Object):
         """
         logger.warning("Getting all statuses")
         if event.params.get("recompute", False):
-            for component in self.components:
-                component.recompute_statuses()
+            self._recompute_statuses()
 
         current_app_statuses = self._get_sorted_statuses(scope="app")
         current_unit_statuses = self._get_sorted_statuses(scope="unit")
@@ -220,8 +267,7 @@ class StatusHandler(Object):
 
         Note: The charm-code will still listen to update_status to perform self healing.
         """
-        for component in self.components:
-            component.recompute_statuses()
+        self._recompute_statuses()
 
     @staticmethod
     def format_statuses(statuses: list[tuple[str, StatusObject]]) -> str:

@@ -25,7 +25,6 @@ class MyCharm(CharmBase, ManagerStatusProtocol):
             self,
             name="my-charm",
             status_relation_name="status-peers",
-            compute_statuses_callback=lambda scope: self.compute_statuses(scope),
         )
 
     def _on_update_status(self, event):
@@ -49,14 +48,10 @@ METADATA = {
 
 @pytest.fixture(scope="module")
 def test_charm_context() -> (
-    Generator[
-        tuple[testing.Context[MyCharm], testing.State, testing.PeerRelation], Any, Any
-    ]
+    Generator[tuple[testing.Context[MyCharm], testing.State, testing.PeerRelation], Any, Any]
 ):
     ctx = testing.Context(MyCharm, meta=METADATA)
-    relation = testing.PeerRelation(
-        id=1, endpoint="status-peers", interface="status-peers"
-    )
+    relation = testing.PeerRelation(id=1, endpoint="status-peers", interface="status-peers")
     state = testing.State(leader=True, relations=[relation])
     yield ctx, state, relation
 
@@ -149,9 +144,7 @@ def test_component_statuses_clear_unit(context, state, peer_relation):
 def test_component_statuses_get_unit(context, state):
     with context(context.on.update_status(), state) as manager:
         manager.charm.component_statuses.add(
-            StatusObject(
-                status=WaitingStatus("Waiting for new event"), running="async"
-            ),
+            StatusObject(status=WaitingStatus("Waiting for new event"), running="async"),
             scope="unit",
         )
         manager.charm.component_statuses.add(
@@ -185,9 +178,7 @@ def test_component_statuses_get_unit(context, state):
 def test_component_statuses_delete_unit(context, state, peer_relation):
     with context(context.on.update_status(), state) as manager:
         manager.charm.component_statuses.add(
-            StatusObject(
-                status=WaitingStatus("Waiting for new event"), running="async"
-            ),
+            StatusObject(status=WaitingStatus("Waiting for new event"), running="async"),
             scope="unit",
         )
         manager.charm.component_statuses.add(
@@ -208,30 +199,3 @@ def test_component_statuses_delete_unit(context, state, peer_relation):
     assert unit_status_list[0] == StatusObject(
         status=WaitingStatus("Waiting for new event"), running="async"
     )
-
-
-def test_component_statuses_recompute_statuses(context, state, peer_relation):
-    blocked_status_object = StatusObject(status=BlockedStatus("blocked"))
-    with context(context.on.update_status(), state) as manager:
-        manager.charm.component_statuses.add(blocked_status_object, scope="unit")
-        manager.charm.component_statuses.recompute_statuses()
-        out = manager.run()
-
-    local_unit_data = out.get_relation(peer_relation.id).local_unit_data
-
-    unit_status_list = StatusObjectList.model_validate_json(local_unit_data["my-charm"])
-
-    assert len(unit_status_list.root) == 1
-
-    # Check the former status has been erased
-    assert unit_status_list[0] != blocked_status_object
-
-    # Check the computed status is in place
-    assert unit_status_list[0] == StatusObject(status=ActiveStatus("running"))
-
-    local_app_data = out.get_relation(peer_relation.id).local_app_data
-
-    app_status_list = StatusObjectList.model_validate_json(local_app_data["my-charm"])
-
-    assert len(app_status_list.root) == 1
-    assert app_status_list[0] == StatusObject(status=BlockedStatus("blah"))
