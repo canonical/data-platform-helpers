@@ -70,8 +70,7 @@ def get_charm_revision(unit: Unit, local_version: str = "0") -> str:
         return local_version
 
     # charm_path is of the format ch:amd64/jammy/<charm-name>-<revision number>
-    revision = charm_path.split("-")[-1]
-    return revision
+    return charm_path.split("-")[-1]
 
 
 class CrossAppVersionChecker(Object):
@@ -178,13 +177,9 @@ class CrossAppVersionChecker(Object):
         for relation_name in self.relations_to_check:
             for rel in self.charm.model.relations[relation_name]:
                 rel.data[self.charm.model.app][VERSION_CONST] = self.version
-                rel.data[self.charm.model.app][DEPLOYMENT_TYPE] = str(
-                    self.get_deployment_prefix()
-                )
+                rel.data[self.charm.model.app][DEPLOYMENT_TYPE] = str(self.get_deployment_prefix())
 
-    def set_version_on_related_app(
-        self, relation_name: str, related_app_name: str
-    ) -> None:
+    def set_version_on_related_app(self, relation_name: str, related_app_name: str) -> None:
         """Sets the version number across for a specified relation on a specified app."""
         if not self.charm.unit.is_leader():
             return
@@ -192,9 +187,7 @@ class CrossAppVersionChecker(Object):
         for rel in self.charm.model.relations[relation_name]:
             if rel.app.name == related_app_name:
                 rel.data[self.charm.model.app][VERSION_CONST] = self.version
-                rel.data[self.charm.model.app][DEPLOYMENT_TYPE] = str(
-                    self.get_deployment_prefix()
-                )
+                rel.data[self.charm.model.app][DEPLOYMENT_TYPE] = str(self.get_deployment_prefix())
 
     def set_version_on_relation_created(self, event) -> None:
         """Shares the charm's revision to the newly integrated application.
@@ -231,10 +224,7 @@ class CrossAppVersionChecker(Object):
             for relation_name in self.relations_to_check:
                 for rel in self.charm.model.relations[relation_name]:
                     if rel.app.name == app_name:
-                        return (
-                            rel.data[rel.app][DEPLOYMENT_TYPE]
-                            == LOCAL_BUILT_CHARM_PREFIX
-                        )
+                        return rel.data[rel.app][DEPLOYMENT_TYPE] == LOCAL_BUILT_CHARM_PREFIX
         except KeyError:
             pass
 

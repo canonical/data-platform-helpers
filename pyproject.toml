@@ -71,6 +71,13 @@ select = ["F", "E", "W", "C", "N", "R", "D", "I001", "UP"]
 ignore = ["E501", "D107", "D417"]
 fixable = ["ALL"]
 
+[tool.ruff.lint.per-file-ignores]
+# TODO: Fix those linting errors and clean this section.
+"data_platform_helpers/__init__.py" = ["D104"]
+"data_platform_helpers/tests_helpers/__init__.py" = ["D104"]
+"data_platform_helpers/tests_helpers/k8s/ha_helpers.py" = ["D100"]
+"data_platform_helpers/tests_helpers/vms/ha_helpers.py" = ["D100"]
+
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 99
 
