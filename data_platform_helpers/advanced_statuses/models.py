@@ -1,6 +1,24 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-"""This file defines the models for StatusObject with extensive validation."""
+"""This file defines the models for StatusObject with extensive validation.
+
+The StatusObject are enhanced statuses, that embed some extra information.
+
+A StatusObject is composed of an ops Status, and can contain the following extra information:
+ * check: a string representing the check that was run and led to this status
+ * action: The action the user should take first.
+ * running: this field can be either empty, or one of "async" or "blocking". In
+ the two last cases, it means that this status is a running status. It is
+ "blocking" if it should block other events from running and should be
+ discarded at the end of the event, or "async" if it should be persisted among
+ events until the long running task finishes. For example, a blocking running
+ status could be "Waiting to drain shard" while an async running status could
+ be "Running backup <backup-id". Statuses that are not running are regular statuses
+ * approved_critical_component: This specifies statuses that are critical and
+ require immediate action. They should be approved by managers as they break
+ the UX and can extend to more than 120 characters, which is a status size
+ limit.
+"""
 
 from __future__ import annotations
 
