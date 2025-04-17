@@ -113,24 +113,24 @@ def test_charm_context() -> (
 
 
 @pytest.fixture
-def context(test_charm_context):
+def context(test_charm_context) -> Generator[testing.Context[MyCharm], Any, Any]:
     ctx, _, _ = test_charm_context
     yield ctx
 
 
 @pytest.fixture
-def state(test_charm_context):
+def state(test_charm_context) -> Generator[testing.State, Any, Any]:
     _, _state, _ = test_charm_context
     yield _state
 
 
 @pytest.fixture
-def peer_relation(test_charm_context):
+def peer_relation(test_charm_context) -> Generator[testing.PeerRelation, Any, Any]:
     _, _, relation = test_charm_context
     yield relation
 
 
-def test_status_handler(context, state):
+def test_status_handler(context: testing.Context[MyCharm], state: testing.State):
     out = context.run(context.on.update_status(), state)
 
     app_status = out.app_status
@@ -140,7 +140,7 @@ def test_status_handler(context, state):
     assert unit_status == ActiveStatus("running")
 
 
-def test_multiple_statuses(context, state: testing.State):
+def test_multiple_statuses(context: testing.Context[MyCharm], state: testing.State):
     out = context.run(context.on.update_status(), state)
 
     out_bis = context.run(context.on.update_status(), out)
@@ -160,7 +160,7 @@ def test_multiple_statuses(context, state: testing.State):
     assert json_output["unit"][0]["Status"] == "Active"
 
 
-def test_multiple_components(context: testing.Context, state: testing.State):
+def test_multiple_components(context: testing.Context[MyCharm], state: testing.State):
     out = context.run(context.on.update_status(), state)
     out_bis = context.run(context.on.update_status(), out)
     out_ter = context.run(context.on.update_status(), out_bis)

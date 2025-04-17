@@ -98,7 +98,7 @@ class ComponentStatuses(Object):
             status,
             key=lambda status: -PRIORITIES.get(status.status.name, 0),
         )
-        logger.warning(f"{current_data=}")
+        logger.debug(f"{current_data=}")
         databag.update({self.name: current_data.model_dump_json()})
 
     def set(self, status: StatusObject, scope: Scope) -> None:

@@ -231,7 +231,7 @@ class StatusHandler(Object):
             for scope in get_args(Scope):
                 manager.component_statuses.clear(scope)
                 statuses = manager.compute_statuses(scope)
-                logger.info(f"Recomputed statuses for {scope=}: {statuses}")
+                logger.debug(f"Recomputed statuses for {scope=}: {statuses}")
                 for status in statuses:
                     manager.component_statuses.add(status=status, scope=scope)
 
@@ -242,14 +242,14 @@ class StatusHandler(Object):
         If recompute = True, it will recompute all statuses, cache the results
         in the databag, and output it.
         """
-        logger.warning("Getting all statuses")
+        logger.debug("Getting all statuses")
         if event.params.get("recompute", False):
             self._recompute_statuses()
 
         current_app_statuses = self._get_sorted_statuses(scope="app")
         current_unit_statuses = self._get_sorted_statuses(scope="unit")
-        logger.warning(f"{current_app_statuses=}")
-        logger.warning(f"{current_unit_statuses=}")
+        logger.debug(f"{current_app_statuses=}")
+        logger.debug(f"{current_unit_statuses=}")
 
         event.set_results(
             {

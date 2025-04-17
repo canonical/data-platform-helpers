@@ -57,24 +57,28 @@ def test_charm_context() -> (
 
 
 @pytest.fixture
-def context(test_charm_context):
+def context(
+    test_charm_context: testing.Context[MyCharm],
+) -> Generator[testing.Context[MyCharm], Any, Any]:
     ctx, _, _ = test_charm_context
     yield ctx
 
 
 @pytest.fixture
-def state(test_charm_context):
+def state(test_charm_context) -> Generator[testing.State, Any, Any]:
     _, _state, _ = test_charm_context
     yield _state
 
 
 @pytest.fixture
-def peer_relation(test_charm_context):
+def peer_relation(test_charm_context) -> Generator[testing.PeerRelation, Any, Any]:
     _, _, relation = test_charm_context
     yield relation
 
 
-def test_component_statuses_add_unit(context, state, peer_relation):
+def test_component_statuses_add_unit(
+    context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
+):
     with context(context.on.update_status(), state) as manager:
         manager.charm.component_statuses.add(
             StatusObject(status=WaitingStatus("Waiting for new event")), scope="unit"
@@ -87,7 +91,9 @@ def test_component_statuses_add_unit(context, state, peer_relation):
     assert len(unit_status_list.root) == 1
 
 
-def test_component_statuses_add_app(context, state, peer_relation):
+def test_component_statuses_add_app(
+    context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
+):
     with context(context.on.update_status(), state) as manager:
         manager.charm.component_statuses.add(
             StatusObject(status=WaitingStatus("Waiting for new event")), scope="app"
@@ -100,7 +106,9 @@ def test_component_statuses_add_app(context, state, peer_relation):
     assert len(app_status_list.root) == 1
 
 
-def test_component_statuses_set_unit(context, state, peer_relation):
+def test_component_statuses_set_unit(
+    context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
+):
     with context(context.on.update_status(), state) as manager:
         manager.charm.component_statuses.add(
             StatusObject(status=WaitingStatus("Waiting for new event")), scope="unit"
@@ -121,7 +129,9 @@ def test_component_statuses_set_unit(context, state, peer_relation):
     assert unit_status_list[0] == StatusObject(status=BlockedStatus("blocked"))
 
 
-def test_component_statuses_clear_unit(context, state, peer_relation):
+def test_component_statuses_clear_unit(
+    context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
+):
     with context(context.on.update_status(), state) as manager:
         manager.charm.component_statuses.add(
             StatusObject(status=WaitingStatus("Waiting for new event")), scope="unit"
@@ -141,7 +151,7 @@ def test_component_statuses_clear_unit(context, state, peer_relation):
     assert len(unit_status_list.root) == 0
 
 
-def test_component_statuses_get_unit(context, state):
+def test_component_statuses_get_unit(context: testing.Context[MyCharm], state: testing.State):
     with context(context.on.update_status(), state) as manager:
         manager.charm.component_statuses.add(
             StatusObject(status=WaitingStatus("Waiting for new event"), running="async"),
@@ -175,7 +185,9 @@ def test_component_statuses_get_unit(context, state):
         assert len(all_statuses.root) == 3
 
 
-def test_component_statuses_delete_unit(context, state, peer_relation):
+def test_component_statuses_delete_unit(
+    context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
+):
     with context(context.on.update_status(), state) as manager:
         manager.charm.component_statuses.add(
             StatusObject(status=WaitingStatus("Waiting for new event"), running="async"),
