@@ -282,9 +282,9 @@ class StatusHandler(Object):
 
         table.add_column("Status", no_wrap=True)
         table.add_column("Component Name", no_wrap=True)
-        table.add_column("Message", no_wrap=True)
-        table.add_column("Action", no_wrap=True)
-        table.add_column("Reason", no_wrap=True)
+        table.add_column("Message", overflow="fold")
+        table.add_column("Action", overflow="fold")
+        table.add_column("Reason", overflow="fold")
 
         for component_name, status in statuses:
             table.add_row(
