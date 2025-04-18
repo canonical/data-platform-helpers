@@ -257,10 +257,11 @@ class StatusHandler(Object):
         logger.debug(f"{current_app_statuses=}")
         logger.debug(f"{current_unit_statuses=}")
 
+        event.log(self.format_statuses("app", current_app_statuses))
+        event.log(self.format_statuses("unit", current_unit_statuses))
+
         event.set_results(
             {
-                "app": self.format_statuses("app", current_app_statuses),
-                "unit": self.format_statuses("unit", current_unit_statuses),
                 "json-output": {
                     "app": self.json_output(current_app_statuses),
                     "unit": self.json_output(current_unit_statuses),
