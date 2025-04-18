@@ -43,7 +43,7 @@ from typing import get_args
 from ops import Application
 from ops.charm import ActionEvent, CharmBase, CollectStatusEvent, UpdateStatusEvent
 from ops.framework import Object
-from ops.model import ActiveStatus, StatusBase, Unit
+from ops.model import ActiveStatus, StatusBase, Unit, UnknownStatus
 from rich.console import Console
 from rich.table import Table
 
@@ -184,6 +184,10 @@ class StatusHandler(Object):
         if critical_statuses:
             # When we have critical statuses, we display it right away.
             event.add_status(critical_statuses[0][1].status)
+            return
+
+        if not all_statuses:
+            # We don't have any status so we return and ops will display an unknown status.
             return
 
         first_status = all_statuses[0][1].status
