@@ -36,6 +36,7 @@ class CharmOperator():
 import itertools
 import json
 from functools import cached_property, lru_cache
+from io import StringIO
 from logging import getLogger
 from typing import get_args
 
@@ -43,7 +44,8 @@ from ops import Application
 from ops.charm import ActionEvent, CharmBase, CollectStatusEvent, UpdateStatusEvent
 from ops.framework import Object
 from ops.model import ActiveStatus, StatusBase, Unit
-from prettytable import PrettyTable
+from rich.console import Console
+from rich.table import Table
 
 from data_platform_helpers.advanced_statuses.components import (
     PRIORITIES,
@@ -253,8 +255,8 @@ class StatusHandler(Object):
 
         event.set_results(
             {
-                "app": self.format_statuses(current_app_statuses),
-                "unit": self.format_statuses(current_unit_statuses),
+                "app": self.format_statuses("app", current_app_statuses),
+                "unit": self.format_statuses("unit", current_unit_statuses),
                 "json-output": {
                     "app": self.json_output(current_app_statuses),
                     "unit": self.json_output(current_unit_statuses),
@@ -270,12 +272,19 @@ class StatusHandler(Object):
         self._recompute_statuses()
 
     @staticmethod
-    def format_statuses(statuses: list[tuple[str, StatusObject]]) -> str:
+    def format_statuses(scope: Scope, statuses: list[tuple[str, StatusObject]]) -> str:
         """Formats the statuses to display a fancy array."""
-        table = PrettyTable(field_names=["Status", "Component Name", "Message", "Action", "Reason"])
+        table = Table(title=f"{scope.capitalize()} Statuses")
+
+        table.add_column("Status", no_wrap=True)
+        table.add_column("Component Name", no_wrap=True)
+        table.add_column("Message", no_wrap=True)
+        table.add_column("Action", no_wrap=True)
+        table.add_column("Reason", no_wrap=True)
+
         for component_name, status in statuses:
             table.add_row(
-                [
+                *[
                     status.status.name.capitalize(),
                     component_name,
                     status.status.message,
@@ -284,7 +293,11 @@ class StatusHandler(Object):
                 ]
             )
 
-        return table.get_formatted_string()
+        out_f = StringIO()
+        console = Console(file=out_f, width=79)
+        console.print(table)
+
+        return out_f.getvalue()
 
     @staticmethod
     def json_output(
