@@ -231,15 +231,23 @@ class StatusHandler(Object):
         """
         self._on_scope_statuses(scope="app", event=event)
 
+    def _recompute_statuses_for_scope(self, scope: Scope, manager: ManagerStatusProtocol):
+        """Recomputes for a specific scope."""
+        manager.component_statuses.clear(scope)
+        statuses = manager.compute_statuses(scope)
+        logger.debug(f"Recomputed statuses for {scope=}: {statuses}")
+        for status in statuses:
+            manager.component_statuses.add(status=status, scope=scope)
+
     def _recompute_statuses(self):
         """Recompute all statuses for all components."""
         for manager in self.components:
-            for scope in get_args(Scope):
-                manager.component_statuses.clear(scope)
-                statuses = manager.compute_statuses(scope)
-                logger.debug(f"Recomputed statuses for {scope=}: {statuses}")
-                for status in statuses:
-                    manager.component_statuses.add(status=status, scope=scope)
+            # For unit
+            self._recompute_statuses_for_scope("unit", manager)
+            # We don't recompute statuses for the app if we're not leader.
+            if not self.charm.unit.is_leader():
+                return
+            self._recompute_statuses_for_scope("app", manager)
 
     def _on_status_detail_action(self, event: ActionEvent) -> None:
         """Handles status-detail action.
