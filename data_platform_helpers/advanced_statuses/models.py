@@ -130,7 +130,7 @@ class StatusObject(BaseModel):
 
     approved_critical_component: bool = Field(
         default=False,
-        description="Critical components statuses breaks the UX by using all 120 characters. They must be approved by Data Platform managers",
+        description="Critical components statuses breaks the UX by using all 120 characters. They must be approved by Data Platform managers.",
     )
 
 

@@ -38,12 +38,11 @@ import json
 from functools import cached_property, lru_cache
 from io import StringIO
 from logging import getLogger
-from typing import get_args
 
 from ops import Application
 from ops.charm import ActionEvent, CharmBase, CollectStatusEvent, UpdateStatusEvent
 from ops.framework import Object
-from ops.model import ActiveStatus, StatusBase, Unit, UnknownStatus
+from ops.model import ActiveStatus, StatusBase, Unit
 from rich.console import Console
 from rich.table import Table
 
