@@ -24,7 +24,7 @@ class <>Manager(ManagerStatusProtocol):
         # status for this component/lib excluding blocking running statuses
         # ....
         if self.is_active():
-            return [StatusObject(...)]
+            return StatusObjectList([StatusObject(...)])
 
     def some_business_logic_function():
         # we know this status is relevant for this component/manager/lib

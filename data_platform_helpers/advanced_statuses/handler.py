@@ -9,7 +9,7 @@ It also provides a way to set the status immediately when necessary.
 
 Example:
 class CharmOperator():
-    def __init__() -> None:
+    def __init__(self, *args, **kwargs) -> None:
         self.framework.observe(
             update_status, self._on_heartbeat
         )
@@ -18,10 +18,10 @@ class CharmOperator():
         # checks, before the StatusHandler recomputes statuses
         # components
         self.status = StatusHandler( # priority order
-            self.upgrade.status_component,
-            self.tls.status_component,
-            self.backups.status_component,
-            self.shard.status_component
+            self.upgrade,
+            self.tls,
+            self.backups,
+            self.shard,
         )
         ...
 
