@@ -19,12 +19,12 @@ class <>Manager(ManagerStatusProtocol):
     def __init__():
         self.status_component = ComponentStatuses(statuses_relation_name)
 
-    def compute_statuses(self, scope: str) -> StatusObjectList:
+    def compute_statuses(self, scope: str) -> Sequence[StatusObject]:
         # Implementing compute logic - this should compute every possible
         # status for this component/lib excluding blocking running statuses
         # ....
         if self.is_active():
-            return StatusObjectList([StatusObject(...)])
+            return [StatusObject(...)]
 
     def some_business_logic_function():
         # we know this status is relevant for this component/manager/lib
@@ -38,12 +38,11 @@ class <>Manager(ManagerStatusProtocol):
             self.status_component.add(<Manager>Statuses.<Z>)
 """
 
+from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
 from data_platform_helpers.advanced_statuses.components import ComponentStatuses
-from data_platform_helpers.advanced_statuses.models import (
-    StatusObjectList,
-)
+from data_platform_helpers.advanced_statuses.models import StatusObject
 from data_platform_helpers.advanced_statuses.types import Scope
 
 
@@ -54,7 +53,7 @@ class ManagerStatusProtocol(Protocol):
     # Force subclasses to initialise status component
     component_statuses: ComponentStatuses
 
-    def compute_statuses(self, scope: Scope) -> StatusObjectList:
+    def compute_statuses(self, scope: Scope) -> Sequence[StatusObject]:
         """Forces subclasses to implement compute_statuses.
 
         This function computes all feasible statuses for a component (or lib if

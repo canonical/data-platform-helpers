@@ -8,7 +8,7 @@ CollectUnitStatus, CollectAppStatus, UpdateStatus, and the action
 It also provides a way to set the status immediately when necessary.
 
 Example:
-class CharmOperator():
+class CharmOperator(ManagerStatusProtocol):
     def __init__(self, *args, **kwargs) -> None:
         self.framework.observe(
             update_status, self._on_heartbeat
@@ -18,6 +18,7 @@ class CharmOperator():
         # checks, before the StatusHandler recomputes statuses
         # components
         self.status = StatusHandler( # priority order
+            self,
             self.upgrade,
             self.tls,
             self.backups,
