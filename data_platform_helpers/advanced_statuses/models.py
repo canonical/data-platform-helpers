@@ -30,7 +30,7 @@ from typing import (
     get_args,
 )
 
-from ops.model import StatusBase, _SettableStatusName
+from ops.model import StatusBase
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -42,18 +42,17 @@ from pydantic import (
 )
 from pydantic_core import core_schema
 
+STATUS_NAMES = ["error", "blocked", "maintenance", "waiting", "active", "unknown"]
+
 
 def validate_entry(tp: type[Any], handler: GetCoreSchemaHandler):
     """Validates that an object can be parsed as a StatusBase by pydantic."""
-    _settable_status_names = get_args(_SettableStatusName)
 
     def validate_from_dict(value: dict) -> StatusBase:
         name = value.get("name", "")
         message = value.get("message", "")
-        if name not in _settable_status_names:
-            raise ValueError(
-                f"Invalid status name: {name}, should be one of {_settable_status_names}"
-            )
+        if name not in STATUS_NAMES:
+            raise ValueError(f"Invalid status name: {name}, should be one of {STATUS_NAMES}")
         return StatusBase.from_name(name, message)
 
     from_dict_schema = core_schema.chain_schema(
