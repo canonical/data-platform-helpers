@@ -27,7 +27,6 @@ from typing import (
     Annotated,
     Any,
     Literal,
-    get_args,
 )
 
 from ops.model import StatusBase
