@@ -62,3 +62,10 @@ def test_create_status_object_dict():
 
     assert status_list["component-1"][0].status == BlockedStatus("blah")
     assert status_list["component-2"][0].status == MaintenanceStatus("bluh")
+
+
+def test_lookup():
+    a = StatusObject(status=BlockedStatus("blah"))
+    status_list = StatusObjectList([a, StatusObject(status=MaintenanceStatus("bluh"))])
+
+    assert a in status_list

@@ -131,6 +131,18 @@ class StatusObject(BaseModel):
         description="Critical components statuses breaks the UX by using all 120 characters. They must be approved by Data Platform managers.",
     )
 
+    def __eq__(self, other: Any):  # noqa: D105
+        if not isinstance(other, StatusObject):
+            return False
+        return (
+            self.status.name == other.status.name
+            and self.status.message == other.status.message
+            and self.check == other.check
+            and self.action == other.action
+            and self.running == other.running
+            and self.approved_critical_component == other.approved_critical_component
+        )
+
 
 class StatusObjectList(RootModel):
     """A Status Object list, used by different components."""
