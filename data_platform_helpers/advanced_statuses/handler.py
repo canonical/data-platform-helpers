@@ -130,7 +130,7 @@ class StatusHandler(Object):
         match status.running, statuses, is_action:
             case None, _, _:
                 raise ValueError(f"Status {status} is not a running status.")
-            case "async", [], _:
+            case ("async", [], _) | ("async", _, True):
                 self.object(scope).status = status.status
                 if async_status_component is None:
                     raise ValueError("No status component provided to store the async status.")
