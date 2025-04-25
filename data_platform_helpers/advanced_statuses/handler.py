@@ -246,7 +246,7 @@ class StatusHandler(Object):
             self._recompute_statuses_for_scope("unit", manager)
             # We don't recompute statuses for the app if we're not leader.
             if not self.charm.unit.is_leader():
-                return
+                continue
             self._recompute_statuses_for_scope("app", manager)
 
     def _on_status_detail_action(self, event: ActionEvent) -> None:
