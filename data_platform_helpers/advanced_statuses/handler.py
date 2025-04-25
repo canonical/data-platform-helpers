@@ -257,8 +257,10 @@ class StatusHandler(Object):
         in the databag, and output it.
         """
         logger.debug("Getting all statuses")
-        if event.params.get("recompute", False):
+        if recompute := event.params.get("recompute", False):
             self._recompute_statuses()
+
+        event.log(f"{'Recomputed' if recompute else 'Stored'} statuses:")
 
         current_app_statuses = self._get_sorted_statuses(scope="app")
         current_unit_statuses = self._get_sorted_statuses(scope="unit")
