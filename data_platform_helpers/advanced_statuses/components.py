@@ -94,7 +94,7 @@ class ComponentStatuses(Object):
         current_data = StatusObjectList.model_validate_json(databag.get(self.name, "[]"))
 
         if status in current_data.root:
-            logger.info("Not inserting status already present in databag.")
+            logger.debug("Not inserting status already present in databag.")
             return
 
         # Insert already sorted, we want to have it by decreasing priority so
