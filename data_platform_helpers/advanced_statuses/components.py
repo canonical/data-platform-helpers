@@ -92,6 +92,11 @@ class ComponentStatuses(Object):
             logger.warning("No databag present for statuses, information lost for next events.")
             return
         current_data = StatusObjectList.model_validate_json(databag.get(self.name, "[]"))
+
+        if status in current_data.root:
+            logger.info("Not inserting status already present in databag.")
+            return
+
         # Insert already sorted, we want to have it by decreasing priority so
         # we have to sort by negative priority as bisect library does not allow
         # to sort by decreasing order.

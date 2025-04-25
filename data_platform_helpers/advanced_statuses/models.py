@@ -143,6 +143,9 @@ class StatusObjectList(RootModel):
     def __getitem__(self, item: int) -> StatusObject:  # noqa: D105
         return self.root[item]
 
+    def __contains__(self, item: Any) -> bool:  # noqa: D105
+        return item in self.root
+
     def remove(self, item: StatusObject) -> None:  # noqa: D102
         return self.root.remove(item)
 
