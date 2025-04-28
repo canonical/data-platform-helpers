@@ -34,11 +34,11 @@ from data_platform_helpers.advanced_statuses.types import Scope
 logger = getLogger(__name__)
 
 PRIORITIES: dict[str, int] = {
-    "error": 5,
-    "blocked": 4,
-    "maintenance": 3,
-    "waiting": 2,
-    "active": 1,
+    "error": 50,
+    "blocked": 40,
+    "maintenance": 30,
+    "waiting": 20,
+    "active": 10,
 }
 
 
