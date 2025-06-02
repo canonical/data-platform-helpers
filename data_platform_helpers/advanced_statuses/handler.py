@@ -47,16 +47,14 @@ from ops.model import ActiveStatus, StatusBase, Unit
 from rich.console import Console
 from rich.table import Table
 
-from data_platform_helpers.advanced_statuses.components import (
-    PRIORITIES,
-    ComponentStatuses,
-)
+from data_platform_helpers.advanced_statuses.components import PRIORITIES, StatusesState
 from data_platform_helpers.advanced_statuses.models import (
     StatusObject,
     StatusObjectDict,
 )
 from data_platform_helpers.advanced_statuses.protocol import ManagerStatusProtocol
 from data_platform_helpers.advanced_statuses.types import Scope
+from data_platform_helpers.advanced_statuses.utils import as_status
 
 logger = getLogger(__name__)
 
@@ -79,13 +77,8 @@ class StatusHandler(Object):
         self.framework.observe(self.charm.on.update_status, self._on_update_status)
 
     @cached_property
-    def components_statuses(self) -> list[ComponentStatuses]:
-        """All components statuses."""
-        return [component.component_statuses for component in self.components]
-
-    @cached_property
     def _component_names(self) -> list[str]:
-        return [component.name for component in self.components_statuses]
+        return [component.name for component in self.components]
 
     @lru_cache
     def _component_priority(self, component_name: str):
@@ -108,7 +101,8 @@ class StatusHandler(Object):
         scope: Scope,
         is_action: bool = False,
         # required to save async status
-        async_status_component: ComponentStatuses | None = None,
+        statuses_state: StatusesState | None = None,
+        component_name: str | None = None,
     ):
         """Immediately sets a running status.
 
@@ -127,19 +121,20 @@ class StatusHandler(Object):
         Raises: if StatusObject isn't a running status.
         """
         statuses = self._get_critical_statuses(scope)
+        ops_status = as_status(status)
         match status.running, statuses, is_action:
             case None, _, _:
                 raise ValueError(f"Status {status} is not a running status.")
             case ("async", [], _) | ("async", _, True):
-                self.object(scope).status = status.status
-                if async_status_component is None:
+                self.object(scope).status = ops_status
+                if statuses_state is None or component_name is None:
                     raise ValueError("No status component provided to store the async status.")
-                async_status_component.add(status, scope)
+                statuses_state.add(status, scope, component_name)
             case "async", _, _:
                 # We're not displaying the status because there's a more important status.
                 logger.info("not displaying status %s", status.model_dump())
             case "blocking", [], _:
-                self.object(scope).status = status.status
+                self.object(scope).status = ops_status
             case "blocking", _, False:
                 # We're not displaying the status because there's a more important status.
                 logger.info("not displaying status %s", status.model_dump())
@@ -147,12 +142,12 @@ class StatusHandler(Object):
                 # We have critical statuses but this is an action so we
                 # override this status and log.
                 logger.info("Overriding critical status %s", statuses)
-                self.object(scope).status = status.status
+                self.object(scope).status = ops_status
 
     @lru_cache
     def _get_sorted_statuses(self, scope: Scope) -> list[tuple[str, StatusObject]]:
         statuses_by_components = StatusObjectDict.model_validate(
-            {component.name: component.get(scope) for component in self.components_statuses}
+            {component.name: component.get_statuses(scope) for component in self.components}
         )
         current_statuses = [
             (component, item)
@@ -166,7 +161,7 @@ class StatusHandler(Object):
         return sorted(
             itertools.chain(current_statuses),
             key=lambda status: (
-                -PRIORITIES.get(status[1].status.name, 0),
+                -PRIORITIES.get(status[1].status, 0),
                 self._component_priority(status[0]),
             ),
         )
@@ -183,14 +178,15 @@ class StatusHandler(Object):
 
         if critical_statuses:
             # When we have critical statuses, we display it right away.
-            event.add_status(critical_statuses[0][1].status)
+            ops_status = as_status(critical_statuses[0][1].status)
+            event.add_status(ops_status)
             return
 
         if not all_statuses:
             # We don't have any status so we return and ops will display an unknown status.
             return
 
-        first_status = all_statuses[0][1].status
+        first_status = all_statuses[0][1]
 
         number_of_important_statuses = len(
             [status for status in all_statuses if not isinstance(status[1].status, ActiveStatus)]
@@ -200,13 +196,13 @@ class StatusHandler(Object):
             # We have many statuses so we display the full line.
             event.add_status(
                 StatusBase.from_name(
-                    first_status.name,
+                    first_status.status,
                     f"{first_status.message}. Run `status-detail`: {actions_to_run} action required; {number_of_important_statuses - 1} additional statuses.",
                 )
             )
         else:
             # Only one status which is important, let's log it.
-            event.add_status(first_status)
+            event.add_status(as_status(first_status))
 
     def _on_collect_unit_status(self, event: CollectStatusEvent) -> None:
         """Handles collect_unit_status event.
@@ -233,11 +229,11 @@ class StatusHandler(Object):
 
     def _recompute_statuses_for_scope(self, scope: Scope, manager: ManagerStatusProtocol):
         """Recomputes for a specific scope."""
-        manager.component_statuses.clear(scope)
-        statuses = manager.compute_statuses(scope)
+        manager.state.statuses.clear(scope, component=manager.name)
+        statuses = manager.get_statuses(scope, recompute=True)
         logger.debug(f"Recomputed statuses for {scope=}: {statuses}")
         for status in statuses:
-            manager.component_statuses.add(status=status, scope=scope)
+            manager.state.statuses.add(status=status, scope=scope, component=manager.name)
 
     def _recompute_statuses(self):
         """Recompute all statuses for all components."""
@@ -300,9 +296,9 @@ class StatusHandler(Object):
         for component_name, status in statuses:
             table.add_row(
                 *[
-                    status.status.name.capitalize(),
+                    status.status.capitalize(),
                     component_name,
-                    status.status.message,
+                    status.message,
                     status.action or "N/A",
                     status.check or "N/A",
                 ]
@@ -323,9 +319,9 @@ class StatusHandler(Object):
         for component_name, status in statuses:
             res.append(
                 {
-                    "Status": status.status.name.capitalize(),
+                    "Status": status.status.capitalize(),
                     "Component Name": component_name,
-                    "Message": status.status.message,
+                    "Message": status.message,
                     "Action": status.check or "N/A",
                     "Reason": status.check or "N/A",
                 }

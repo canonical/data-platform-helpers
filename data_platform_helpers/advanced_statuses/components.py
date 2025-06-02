@@ -42,13 +42,12 @@ PRIORITIES: dict[str, int] = {
 }
 
 
-class ComponentStatuses(Object):
+class StatusesState(Object):
     """ComponentStatuses CRUD operations with databag."""
 
     def __init__(
         self,
         parent: Object,
-        name: str,
         status_relation_name: str,
     ) -> None:
         """Initialiser of the Component Statuses.
@@ -64,8 +63,7 @@ class ComponentStatuses(Object):
 
         The parent is used to provide an access to Ops.
         """
-        super().__init__(parent=parent, key=f"status-{name}")
-        self.name = name
+        super().__init__(parent=parent, key="statuses-state")
         self.status_relation_name = status_relation_name
 
     @property
@@ -83,7 +81,7 @@ class ComponentStatuses(Object):
             case "unit":
                 return self.relation.data[self.model.unit]
 
-    def add(self, status: StatusObject, scope: Scope) -> None:
+    def add(self, status: StatusObject, scope: Scope, component: str) -> None:
         """Adds a status to the component."""
         if scope == "app" and not self.model.unit.is_leader():
             logger.warning("Cannot add app status with non-leader unit.")
@@ -91,7 +89,7 @@ class ComponentStatuses(Object):
         if (databag := self.databag(scope)) is None:
             logger.warning("No databag present for statuses, information lost for next events.")
             return
-        current_data = StatusObjectList.model_validate_json(databag.get(self.name, "[]"))
+        current_data = StatusObjectList.model_validate_json(databag.get(component, "[]"))
 
         if status in current_data.root:
             logger.debug("Not inserting %s already present in databag.", status.model_dump())
@@ -103,12 +101,12 @@ class ComponentStatuses(Object):
         insort_right(
             current_data.root,
             status,
-            key=lambda status: -PRIORITIES.get(status.status.name, 0),
+            key=lambda status: -PRIORITIES.get(status.status, 0),
         )
         logger.debug(f"{current_data=}")
-        databag.update({self.name: current_data.model_dump_json()})
+        databag.update({component: current_data.model_dump_json()})
 
-    def set(self, status: StatusObject, scope: Scope) -> None:
+    def set(self, status: StatusObject, scope: Scope, component: str) -> None:
         """Sets component to a specific status.
 
         This overrides all statuses in the databag.
@@ -119,9 +117,9 @@ class ComponentStatuses(Object):
         if (databag := self.databag(scope)) is None:
             logger.warning("No databag present for statuses, information lost for next events.")
             return
-        databag.update({self.name: StatusObjectList([status]).model_dump_json()})
+        databag.update({component: StatusObjectList([status]).model_dump_json()})
 
-    def delete(self, status: StatusObject, scope: Scope) -> None:
+    def delete(self, status: StatusObject, scope: Scope, component: str) -> None:
         """Deletes a status from the component.
 
         If the status is not present, log this information.
@@ -133,16 +131,16 @@ class ComponentStatuses(Object):
             logger.warning("No databag present for statuses, information lost for next events.")
             return
         try:
-            current_data = StatusObjectList.model_validate_json(databag.get(self.name, "[]"))
+            current_data = StatusObjectList.model_validate_json(databag.get(component, "[]"))
             current_data.remove(status)
-            databag.update({self.name: current_data.model_dump_json()})
+            databag.update({component: current_data.model_dump_json()})
         except ValueError:
             logger.warning(
                 f"Tried to delete status {status} in scope {scope} but it was not present"
             )
             return
 
-    def clear(self, scope: Scope) -> None:
+    def clear(self, scope: Scope, component: str) -> None:
         """Clears all statuses from the component."""
         if scope == "app" and not self.model.unit.is_leader():
             logger.warning("Cannot clear app status with non-leader unit.")
@@ -150,11 +148,12 @@ class ComponentStatuses(Object):
         if (databag := self.databag(scope)) is None:
             logger.warning("No databag present for statuses, information lost for next events.")
             return
-        databag.update({self.name: "[]"})
+        databag.update({component: "[]"})
 
     def get(
         self,
         scope: Scope,
+        component: str,
         running_status_only: bool = False,
         running_status_type: Literal["all", "blocking", "async"] = "all",
     ) -> StatusObjectList:
@@ -162,13 +161,14 @@ class ComponentStatuses(Object):
 
         Args:
          * scope: The scope we want to get
+         * component: The component we want to get
          * running_status_only: Do we want only running statuses?
          * running_status_type: If we want running statuses, which kind?
         """
         if (databag := self.databag(scope)) is None:
             logger.warning("No databag present for statuses, information lost for next events.")
             return StatusObjectList(root=[])
-        current_data = StatusObjectList.model_validate_json(databag.get(self.name, "[]"))
+        current_data = StatusObjectList.model_validate_json(databag.get(component, "[]"))
         if not running_status_only:
             return current_data
         match running_status_type:

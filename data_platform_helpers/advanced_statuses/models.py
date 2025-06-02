@@ -24,79 +24,19 @@ from __future__ import annotations
 
 from collections.abc import ItemsView, Iterator
 from typing import (
-    Annotated,
     Any,
     Literal,
+    TypeAlias,
 )
 
-from ops.model import StatusBase
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    GetCoreSchemaHandler,
-    GetPydanticSchema,
     RootModel,
-    WithJsonSchema,
 )
-from pydantic_core import core_schema
 
-STATUS_NAMES = ["error", "blocked", "maintenance", "waiting", "active", "unknown"]
-
-
-def validate_entry(tp: type[Any], handler: GetCoreSchemaHandler):
-    """Validates that an object can be parsed as a StatusBase by pydantic."""
-
-    def validate_from_dict(value: dict) -> StatusBase:
-        name = value.get("name", "")
-        message = value.get("message", "")
-        if name not in STATUS_NAMES:
-            raise ValueError(f"Invalid status name: {name}, should be one of {STATUS_NAMES}")
-        return StatusBase.from_name(name, message)
-
-    from_dict_schema = core_schema.chain_schema(
-        [
-            core_schema.dict_schema(
-                keys_schema=core_schema.str_schema(),
-                values_schema=core_schema.str_schema(),
-            ),
-            core_schema.no_info_plain_validator_function(validate_from_dict),
-        ]
-    )
-
-    return core_schema.json_or_python_schema(
-        json_schema=from_dict_schema,
-        python_schema=core_schema.union_schema(
-            [
-                core_schema.is_instance_schema(StatusBase),
-                from_dict_schema,
-            ]
-        ),
-        serialization=core_schema.plain_serializer_function_ser_schema(
-            lambda instance: {"name": instance.name, "message": instance.message},
-        ),
-    )
-
-
-PydanticStatusBase = Annotated[
-    StatusBase,
-    WithJsonSchema(
-        {
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "enum": ["active", "blocked", "maintenance", "waiting"],
-                    "title": "Name",
-                },
-                "message": {"type": "string", "title": "Message"},
-            },
-            "type": "object",
-            "required": ["name", "message"],
-        },
-        mode="validation",
-    ),
-    GetPydanticSchema(lambda tp, handler: validate_entry(tp, handler)),
-]
+StatusLiteral: TypeAlias = Literal["blocked", "maintenance", "waiting", "active"]
 
 
 class StatusObject(BaseModel):
@@ -114,10 +54,15 @@ class StatusObject(BaseModel):
 
     model_config = ConfigDict(frozen=True)  # Don't allow to update the status object.
 
-    status: PydanticStatusBase = Field(  # type: ignore[invalid-type-form]
-        title="The Ops Status",
-        description="The ops status that will be set if this object is picked.",
+    status: StatusLiteral = Field(
+        title="The Status type",
+        description="The  status type that will be set if this object is picked.",
     )
+    message: str = Field(
+        title="The Status message",
+        description="The status message that will be set if this object is picked.",
+    )
+
     check: str | None = Field(
         default=None, description="What check was performed to determine the status."
     )
@@ -135,8 +80,8 @@ class StatusObject(BaseModel):
         if not isinstance(other, StatusObject):
             return False
         return (
-            self.status.name == other.status.name
-            and self.status.message == other.status.message
+            self.status == other.status
+            and self.message == other.message
             and self.check == other.check
             and self.action == other.action
             and self.running == other.running

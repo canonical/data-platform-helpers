@@ -46,13 +46,13 @@ The approved critical statuses MUST be approved by a manager as they break UX.
 
 from .handler import StatusHandler
 from .protocol import ManagerStatusProtocol
-from .components import ComponentStatuses
+from .components import StatusesState
 from .models import StatusObject, StatusObjectDict, StatusObjectList
 
 __all__ = (
     "StatusHandler",
     "ManagerStatusProtocol",
-    "ComponentStatuses",
+    "StatusesState",
     "StatusObject",
     "StatusObjectDict",
     "StatusObjectList",

@@ -15,7 +15,8 @@ from data_platform_helpers.advanced_statuses.models import (
 def test_create_status_object():
     status = StatusObject.model_validate(
         {
-            "status": BlockedStatus("Invalid config"),
+            "status": "blocked",
+            "message": "Invalid config",
             "check": "Config was not set properly",
             "action": "Rollback configuration change.",
         }
@@ -23,7 +24,8 @@ def test_create_status_object():
 
     assert not status.approved_critical_component
     assert status.model_dump() == {
-        "status": {"name": "blocked", "message": "Invalid config"},
+        "status": "blocked",
+        "message": "Invalid config",
         "check": "Config was not set properly",
         "action": "Rollback configuration change.",
         "running": None,
@@ -35,7 +37,8 @@ def test_create_invalid_status_object():
     with pytest.raises(ValidationError):
         StatusObject.model_validate(
             {
-                "status": {"status": "invalid", "message": "deadbeef"},
+                "status": "invalid",
+                "message": "deadbeef",
                 "check": "Config was not set properly",
                 "action": "Rollback configuration change.",
             }
@@ -44,10 +47,10 @@ def test_create_invalid_status_object():
 
 def test_create_status_object_list():
     status_list = StatusObjectList.model_validate(
-        [{"status": BlockedStatus("blah")}, {"status": MaintenanceStatus("bluh")}]
+        [{"status": "blocked", "message": "blah"}, {"status": "maintenance", "message": "bluh"}]
     )
 
-    status_list.remove(StatusObject(status=BlockedStatus("blah")))
+    status_list.remove(StatusObject(status="blocked", message="blah"))
 
     assert len(status_list.root) == 1
 
@@ -55,17 +58,19 @@ def test_create_status_object_list():
 def test_create_status_object_dict():
     status_list = StatusObjectDict.model_validate(
         {
-            "component-1": [{"status": BlockedStatus("blah")}],
-            "component-2": [{"status": MaintenanceStatus("bluh")}],
+            "component-1": [{"status": "blocked", "message": "blah"}],
+            "component-2": [{"status": "maintenance", "message": "bluh"}],
         }
     )
 
-    assert status_list["component-1"][0].status == BlockedStatus("blah")
-    assert status_list["component-2"][0].status == MaintenanceStatus("bluh")
+    assert status_list["component-1"][0].status == "blocked"
+    assert status_list["component-1"][0].message == "blah"
+    assert status_list["component-2"][0].status == "maintenance"
+    assert status_list["component-2"][0].message == "bluh"
 
 
 def test_lookup():
-    a = StatusObject(status=BlockedStatus("blah"))
-    status_list = StatusObjectList([a, StatusObject(status=MaintenanceStatus("bluh"))])
+    a = StatusObject(status="blocked", message="blah")
+    status_list = StatusObjectList([a, StatusObject(status="maintenance", message="bluh")])
 
     assert a in status_list

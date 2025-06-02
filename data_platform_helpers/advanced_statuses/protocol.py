@@ -41,9 +41,16 @@ class <>Manager(ManagerStatusProtocol):
 from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
-from data_platform_helpers.advanced_statuses.components import ComponentStatuses
+from data_platform_helpers.advanced_statuses.components import StatusesState
 from data_platform_helpers.advanced_statuses.models import StatusObject
 from data_platform_helpers.advanced_statuses.types import Scope
+
+
+@runtime_checkable
+class StatusesStateProtocol(Protocol):
+    """This is a very simple protocol to force a state to define a status state."""
+
+    statuses: StatusesState
 
 
 @runtime_checkable
@@ -51,12 +58,14 @@ class ManagerStatusProtocol(Protocol):
     """This is a very simple protocol used to classes to implement some methods and attributes."""
 
     # Force subclasses to initialise status component
-    component_statuses: ComponentStatuses
+    state: StatusesStateProtocol
+    name: str
 
-    def compute_statuses(self, scope: Scope) -> Sequence[StatusObject]:
+    def get_statuses(self, scope: Scope, recompute: bool = False) -> Sequence[StatusObject]:
         """Forces subclasses to implement compute_statuses.
 
-        This function computes all feasible statuses for a component (or lib if
+        This function gets all feasible statuses for a component (or lib if
         not single kernel) - excluding blocking running statuses.
+        It should recompute the statuses if recompute is true.
         """
         ...

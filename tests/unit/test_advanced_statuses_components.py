@@ -5,36 +5,41 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from ops import ActiveStatus, CharmBase, MaintenanceStatus, WaitingStatus, testing
+from ops import CharmBase, MaintenanceStatus, WaitingStatus, testing
 from ops.model import BlockedStatus
 
-from data_platform_helpers.advanced_statuses.components import ComponentStatuses
+from data_platform_helpers.advanced_statuses.components import StatusesState
 from data_platform_helpers.advanced_statuses.models import (
     StatusObject,
     StatusObjectList,
 )
-from data_platform_helpers.advanced_statuses.protocol import ManagerStatusProtocol
+from data_platform_helpers.advanced_statuses.protocol import (
+    ManagerStatusProtocol,
+    StatusesStateProtocol,
+)
 from data_platform_helpers.advanced_statuses.types import Scope
+
+
+class State(StatusesStateProtocol):
+    def __init__(self, charm: CharmBase):
+        self.statuses = StatusesState(charm, "status-peers")
 
 
 class MyCharm(CharmBase, ManagerStatusProtocol):
     def __init__(self, *args):
         super().__init__(*args)
+        self.name = "my-charm"
         self.framework.observe(self.on.update_status, self._on_update_status)
-        self.component_statuses = ComponentStatuses(
-            self,
-            name="my-charm",
-            status_relation_name="status-peers",
-        )
+        self.state = State(self)
 
     def _on_update_status(self, event):
         return
 
-    def compute_statuses(self, scope: Scope) -> list[StatusObject]:
+    def get_statuses(self, scope: Scope, recompute: bool = False) -> list[StatusObject]:
         if scope == "app":
-            return [StatusObject(status=BlockedStatus("blah"))]
-        return self.component_statuses.get("unit").root or [
-            StatusObject(status=ActiveStatus("running"))
+            return [StatusObject(status="blocked", message="blah")]
+        return self.state.statuses.get("unit", self.name).root or [
+            StatusObject(status="active", message="running")
         ]
 
 
@@ -80,8 +85,10 @@ def test_component_statuses_add_unit(
     context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
 ):
     with context(context.on.update_status(), state) as manager:
-        manager.charm.component_statuses.add(
-            StatusObject(status=WaitingStatus("Waiting for new event")), scope="unit"
+        manager.charm.state.statuses.add(
+            StatusObject(status="waiting", message="Waiting for new event"),
+            scope="unit",
+            component="my-charm",
         )
         out = manager.run()
 
@@ -95,8 +102,10 @@ def test_component_statuses_add_app(
     context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
 ):
     with context(context.on.update_status(), state) as manager:
-        manager.charm.component_statuses.add(
-            StatusObject(status=WaitingStatus("Waiting for new event")), scope="app"
+        manager.charm.state.statuses.add(
+            StatusObject(status="waiting", message="Waiting for new event"),
+            scope="app",
+            component="my-charm",
         )
         out = manager.run()
 
@@ -110,11 +119,15 @@ def test_component_statuses_set_unit(
     context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
 ):
     with context(context.on.update_status(), state) as manager:
-        manager.charm.component_statuses.add(
-            StatusObject(status=WaitingStatus("Waiting for new event")), scope="unit"
+        manager.charm.state.statuses.add(
+            StatusObject(status="waiting", message="Waiting for new event"),
+            scope="unit",
+            component="my-charm",
         )
-        manager.charm.component_statuses.add(
-            StatusObject(status=BlockedStatus("blocked")), scope="unit"
+        manager.charm.state.statuses.add(
+            StatusObject(status="blocked", message="blocked"),
+            scope="unit",
+            component="my-charm",
         )
         out = manager.run()
 
@@ -126,23 +139,27 @@ def test_component_statuses_set_unit(
     assert len(unit_status_list.root) == 2
 
     # Check that it was inserted in order
-    assert unit_status_list[0] == StatusObject(status=BlockedStatus("blocked"))
+    assert unit_status_list[0] == StatusObject(status="blocked", message="blocked")
 
 
 def test_component_statuses_clear_unit(
     context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
 ):
     with context(context.on.update_status(), state) as manager:
-        manager.charm.component_statuses.add(
-            StatusObject(status=WaitingStatus("Waiting for new event")), scope="unit"
+        manager.charm.state.statuses.add(
+            StatusObject(status="waiting", message="Waiting for new event"),
+            scope="unit",
+            component="my-charm",
         )
-        manager.charm.component_statuses.add(
-            StatusObject(status=BlockedStatus("blocked")), scope="unit"
+        manager.charm.state.statuses.add(
+            StatusObject(status="blocked", message="blocked"),
+            scope="unit",
+            component="my-charm",
         )
         out = manager.run()
 
     with context(context.on.update_status(), out) as manager:
-        manager.charm.component_statuses.clear(scope="unit")
+        manager.charm.state.statuses.clear(scope="unit", component="my-charm")
         out = manager.run()
 
     local_unit_data = out.get_relation(peer_relation.id).local_unit_data
@@ -153,35 +170,45 @@ def test_component_statuses_clear_unit(
 
 def test_component_statuses_get_unit(context: testing.Context[MyCharm], state: testing.State):
     with context(context.on.update_status(), state) as manager:
-        manager.charm.component_statuses.add(
-            StatusObject(status=WaitingStatus("Waiting for new event"), running="async"),
+        manager.charm.state.statuses.add(
+            StatusObject(status="waiting", message="Waiting for new event", running="async"),
             scope="unit",
+            component="my-charm",
         )
-        manager.charm.component_statuses.add(
-            StatusObject(status=BlockedStatus("blocked")), scope="unit"
+        manager.charm.state.statuses.add(
+            StatusObject(status="blocked", message="blocked"), scope="unit", component="my-charm"
         )
-        manager.charm.component_statuses.add(
-            StatusObject(status=MaintenanceStatus("installing"), running="blocking"),
+        manager.charm.state.statuses.add(
+            StatusObject(status="maintenance", message="installing", running="blocking"),
             scope="unit",
+            component="my-charm",
         )
         out = manager.run()
 
     with context(context.on.update_status(), out) as manager:
-        running_statuses = manager.charm.component_statuses.get(
-            scope="unit", running_status_only=True
+        running_statuses = manager.charm.state.statuses.get(
+            scope="unit",
+            running_status_only=True,
+            component="my-charm",
         )
         assert len(running_statuses.root) == 2
-        blocking_statuses = manager.charm.component_statuses.get(
-            scope="unit", running_status_only=True, running_status_type="blocking"
+        blocking_statuses = manager.charm.state.statuses.get(
+            scope="unit",
+            running_status_only=True,
+            running_status_type="blocking",
+            component="my-charm",
         )
         assert len(blocking_statuses.root) == 1
 
-        async_statuses = manager.charm.component_statuses.get(
-            scope="unit", running_status_only=True, running_status_type="async"
+        async_statuses = manager.charm.state.statuses.get(
+            scope="unit",
+            running_status_only=True,
+            running_status_type="async",
+            component="my-charm",
         )
         assert len(async_statuses.root) == 1
 
-        all_statuses = manager.charm.component_statuses.get(scope="unit")
+        all_statuses = manager.charm.state.statuses.get(scope="unit", component="my-charm")
         assert len(all_statuses.root) == 3
 
 
@@ -189,18 +216,19 @@ def test_component_statuses_delete_unit(
     context: testing.Context[MyCharm], state: testing.State, peer_relation: testing.PeerRelation
 ):
     with context(context.on.update_status(), state) as manager:
-        manager.charm.component_statuses.add(
-            StatusObject(status=WaitingStatus("Waiting for new event"), running="async"),
+        manager.charm.state.statuses.add(
+            StatusObject(status="waiting", message="Waiting for new event", running="async"),
             scope="unit",
+            component="my-charm",
         )
-        manager.charm.component_statuses.add(
-            StatusObject(status=BlockedStatus("blocked")), scope="unit"
+        manager.charm.state.statuses.add(
+            StatusObject(status="blocked", message="blocked"), scope="unit", component="my-charm"
         )
         out = manager.run()
 
     with context(context.on.update_status(), out) as manager:
-        manager.charm.component_statuses.delete(
-            status=StatusObject(status=BlockedStatus("blocked")), scope="unit"
+        manager.charm.state.statuses.delete(
+            StatusObject(status="blocked", message="blocked"), scope="unit", component="my-charm"
         )
         out_bis = manager.run()
 
@@ -209,5 +237,5 @@ def test_component_statuses_delete_unit(
     unit_status_list = StatusObjectList.model_validate_json(local_unit_data["my-charm"])
     assert len(unit_status_list.root) == 1
     assert unit_status_list[0] == StatusObject(
-        status=WaitingStatus("Waiting for new event"), running="async"
+        status="waiting", message="Waiting for new event", running="async"
     )

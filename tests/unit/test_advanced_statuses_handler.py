@@ -7,36 +7,42 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from ops import ActiveStatus, CharmBase, MaintenanceStatus, StoredState, testing
+from ops import ActiveStatus, CharmBase, StoredState, testing
 from ops.framework import Object
 from ops.model import BlockedStatus
 
-from data_platform_helpers.advanced_statuses.components import ComponentStatuses
+from data_platform_helpers.advanced_statuses.components import StatusesState
 from data_platform_helpers.advanced_statuses.handler import StatusHandler
 from data_platform_helpers.advanced_statuses.models import (
     StatusObject,
 )
-from data_platform_helpers.advanced_statuses.protocol import ManagerStatusProtocol
+from data_platform_helpers.advanced_statuses.protocol import (
+    ManagerStatusProtocol,
+    StatusesStateProtocol,
+)
 from data_platform_helpers.advanced_statuses.types import Scope
 
 
+class State(StatusesStateProtocol):
+    def __init__(self, charm: CharmBase):
+        self.statuses = StatusesState(charm, "status-peers")
+
+
 class OtherComponent(Object, ManagerStatusProtocol):
-    def __init__(self, charm: MyCharm):
+    def __init__(self, charm: MyCharm, state: State):
         super().__init__(parent=charm, key="other-component")
         self._charm = charm
-        self.component_statuses = ComponentStatuses(
-            self,
-            "other-component",
-            status_relation_name="status-peers",
-        )
+        self.state = state
+        self.name = "other-component"
 
-    def compute_statuses(self, scope: Scope) -> list[StatusObject]:
+    def get_statuses(self, scope: Scope, recompute: bool = False) -> list[StatusObject]:
         if scope == "app":
             if self._charm._stored.call_number < 3:
                 return []
             return [
                 StatusObject(
-                    status=BlockedStatus("other component failed"),
+                    status="blocked",
+                    message="other component failed",
                     action="Restart the service",
                 )
             ]
@@ -49,13 +55,10 @@ class MyCharm(CharmBase, ManagerStatusProtocol):
 
     def __init__(self, *args):
         super().__init__(*args)
+        self.name = "my-charm"
+        self.state = State(self)
         self._stored.set_default(call_number=0)
-        self.component_statuses = ComponentStatuses(
-            self,
-            name="my-charm",
-            status_relation_name="status-peers",
-        )
-        self.other_component = OtherComponent(self)
+        self.other_component = OtherComponent(self, self.state)
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.status_handler = StatusHandler(self, self, self.other_component)
 
@@ -63,20 +66,20 @@ class MyCharm(CharmBase, ManagerStatusProtocol):
         self._stored.call_number += 1
         return
 
-    def compute_statuses(self, scope: Scope) -> list[StatusObject]:
+    def get_statuses(self, scope: Scope, recompute: bool = False) -> list[StatusObject]:
         if scope == "app":
             if self._stored.call_number == 1:
-                return [StatusObject(status=BlockedStatus("blah"))]
+                return [StatusObject(status="blocked", message="blah")]
             if self._stored.call_number == 2:
                 return [
-                    StatusObject(status=BlockedStatus("blah")),
-                    StatusObject(status=MaintenanceStatus("running maintenance")),
+                    StatusObject(status="blocked", message="blah"),
+                    StatusObject(status="maintenance", message="running maintenance"),
                 ]
             return [
-                StatusObject(status=MaintenanceStatus("running maintenance")),
+                StatusObject(status="maintenance", message="running maintenance"),
             ]
-        return self.component_statuses.get("unit").root or [
-            StatusObject(status=ActiveStatus("running"))
+        return self.state.statuses.get("unit", self.name).root or [
+            StatusObject(status="active", message="running")
         ]
 
 
