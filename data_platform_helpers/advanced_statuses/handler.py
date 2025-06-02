@@ -178,7 +178,7 @@ class StatusHandler(Object):
 
         if critical_statuses:
             # When we have critical statuses, we display it right away.
-            ops_status = as_status(critical_statuses[0][1].status)
+            ops_status = as_status(critical_statuses[0][1])
             event.add_status(ops_status)
             return
 
