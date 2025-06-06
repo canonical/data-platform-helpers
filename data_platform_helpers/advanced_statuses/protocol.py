@@ -20,7 +20,7 @@ class <>Manager(ManagerStatusProtocol):
         self.name = 'my-name'
         self.state = ...
 
-    def get_statuses(self, scope: str, recompute: bool = True) -> Sequence[StatusObject]:
+    def get_statuses(self, scope: str, recompute: bool = True) -> list[StatusObject]:
         # Implementing compute logic - this should compute every possible
         # status for this component/lib excluding blocking running statuses
         # ....
@@ -39,7 +39,6 @@ class <>Manager(ManagerStatusProtocol):
             self.status_component.add(<Manager>Statuses.<Z>, scope=Scope.APP, component=self.name)
 """
 
-from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
 from data_platform_helpers.advanced_statuses.components import StatusesState
@@ -62,7 +61,7 @@ class ManagerStatusProtocol(Protocol):
     state: StatusesStateProtocol
     name: str
 
-    def get_statuses(self, scope: Scope, recompute: bool = False) -> Sequence[StatusObject]:
+    def get_statuses(self, scope: Scope, recompute: bool = False) -> list[StatusObject]:
         """Forces subclasses to implement get_statuses.
 
         This function gets all feasible statuses for a component (or lib if

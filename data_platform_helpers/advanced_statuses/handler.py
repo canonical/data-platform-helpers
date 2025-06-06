@@ -54,7 +54,7 @@ from data_platform_helpers.advanced_statuses.models import (
 )
 from data_platform_helpers.advanced_statuses.protocol import ManagerStatusProtocol
 from data_platform_helpers.advanced_statuses.types import Scope
-from data_platform_helpers.advanced_statuses.utils import as_status
+from data_platform_helpers.advanced_statuses.utils import as_status, compute_status_message
 
 logger = getLogger(__name__)
 
@@ -135,7 +135,7 @@ class StatusHandler(Object):
                 # We're not displaying the status because there's a more important status.
                 logger.info(
                     "Not displaying status %s, %s critical statuses in queue",
-                    status.model_dump(),
+                    status.model_dump(exclude={"short_message"}),
                     len(critical_statuses),
                 )
             case "blocking", [], _:
@@ -144,7 +144,7 @@ class StatusHandler(Object):
                 # We're not displaying the status because there's a more important status.
                 logger.info(
                     "Not displaying status %s, %s critical statuses in queue",
-                    status.model_dump(),
+                    status.model_dump(exclude={"short_message"}),
                     len(critical_statuses),
                 )
             case "blocking", _, True:
@@ -170,7 +170,16 @@ class StatusHandler(Object):
         ]
 
         # Log all statuses.
-        logger.info(json.dumps({"scope": scope, "statuses": statuses_by_components.model_dump()}))
+        logger.info(
+            json.dumps(
+                {
+                    "scope": scope,
+                    "statuses": statuses_by_components.model_dump(
+                        exclude={"__all__": {"short_message"}}
+                    ),
+                }
+            )
+        )
 
         return sorted(
             itertools.chain(current_statuses),
@@ -215,7 +224,7 @@ class StatusHandler(Object):
             event.add_status(
                 StatusBase.from_name(
                     first_status.status,
-                    f"{first_status.message}. Run `status-detail`: {actions_to_run} action required; {important_statuses - 1} additional statuses.",
+                    compute_status_message(first_status, actions_to_run, important_statuses - 1),
                 )
             )
         else:

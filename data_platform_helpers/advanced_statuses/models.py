@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from collections.abc import ItemsView, Iterator
 from typing import (
+    Annotated,
     Any,
     Literal,
     TypeAlias,
@@ -34,6 +35,7 @@ from pydantic import (
     ConfigDict,
     Field,
     RootModel,
+    StringConstraints,
 )
 
 StatusLiteral: TypeAlias = Literal["blocked", "maintenance", "waiting", "active"]
@@ -61,6 +63,11 @@ class StatusObject(BaseModel):
     message: str = Field(
         title="The Status message",
         description="The status message that will be set if this object is picked.",
+    )
+    short_message: Annotated[str, StringConstraints(max_length=40)] | None = Field(
+        title="A short message",
+        description="The status message displayed if multiple statuses should be displayed. Max len: 40 chars",
+        default=None,
     )
 
     check: str | None = Field(

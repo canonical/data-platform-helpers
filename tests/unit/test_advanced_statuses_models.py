@@ -10,6 +10,7 @@ from data_platform_helpers.advanced_statuses.models import (
     StatusObjectDict,
     StatusObjectList,
 )
+from data_platform_helpers.advanced_statuses.utils import compute_status_message
 
 
 def test_create_status_object():
@@ -30,6 +31,7 @@ def test_create_status_object():
         "action": "Rollback configuration change.",
         "running": None,
         "approved_critical_component": False,
+        "short_message": None,
     }
 
 
@@ -74,3 +76,13 @@ def test_lookup():
     status_list = StatusObjectList([a, StatusObject(status="maintenance", message="bluh")])
 
     assert a in status_list
+
+
+def test_create_with_short_message():
+    status = StatusObject.model_validate(
+        {"status": "blocked", "message": "blah", "short_message": "short"}
+    )
+
+    real_status_message = compute_status_message(status, 1, 1)
+
+    assert "short" in real_status_message
