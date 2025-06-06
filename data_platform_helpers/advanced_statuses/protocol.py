@@ -7,19 +7,20 @@ Those protocols are to be used in components/libs/managers to enforce the
 implementation of specific methods and attributes.
 
 We specifically define the ManagerStatusProtocol, which enforces the
-implementation of a `compute_statuses` method that should compute all feasible
+implementation of a `get_statuses` method that should compute all feasible
 statuses for a component, excluding the blocking running statuses. This
 protocol also ensures that the component/lib/manager has defined a
-`component_statuses` object of type `ComponentStatuses` to store and retrieve
+`state` object of type `StatusesStateProtocol` to store and retrieve
 statuses from the peer relation databag.
 
 Example of use:
 
 class <>Manager(ManagerStatusProtocol):
     def __init__():
-        self.status_component = ComponentStatuses(statuses_relation_name)
+        self.name = 'my-name'
+        self.state = ...
 
-    def compute_statuses(self, scope: str) -> Sequence[StatusObject]:
+    def get_statuses(self, scope: str, recompute: bool = True) -> Sequence[StatusObject]:
         # Implementing compute logic - this should compute every possible
         # status for this component/lib excluding blocking running statuses
         # ....
@@ -30,12 +31,12 @@ class <>Manager(ManagerStatusProtocol):
         # we know this status is relevant for this component/manager/lib
         # regardless of the event
         if X:
-            self.status_component.add(<Manager>Statuses.<X>)
+            self.state.statuses.add(<Manager>Statuses.<X>, scope=Scope.UNIT, component=self.name)
 
         do Y;
 
         if Z:
-            self.status_component.add(<Manager>Statuses.<Z>)
+            self.status_component.add(<Manager>Statuses.<Z>, scope=Scope.APP, component=self.name)
 """
 
 from collections.abc import Sequence
@@ -62,7 +63,7 @@ class ManagerStatusProtocol(Protocol):
     name: str
 
     def get_statuses(self, scope: Scope, recompute: bool = False) -> Sequence[StatusObject]:
-        """Forces subclasses to implement compute_statuses.
+        """Forces subclasses to implement get_statuses.
 
         This function gets all feasible statuses for a component (or lib if
         not single kernel) - excluding blocking running statuses.

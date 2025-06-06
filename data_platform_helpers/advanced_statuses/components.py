@@ -1,20 +1,17 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-"""This file defines the ComponentStatuses class.
+"""This file defines the StateStatuses class.
 
-This class is used by all components that should report statuses.
+This class is used by the state object so that all components can report statuses.
 
 Example:
-class <>Manager(ManagerStatusProtocol):
+class State(iStatusesStateProtocol):
     def __init__(self, charm):
-        self.status_component = ComponentStatuses(
+        self.statuses = StateStatuses(
             charm,
-            'my-component',
             'status-peers',
         )
 
-    def compute_statuses(self, scope: Scope):
-        ...
 
 """
 
@@ -43,7 +40,7 @@ PRIORITIES: dict[str, int] = {
 
 
 class StatusesState(Object):
-    """ComponentStatuses CRUD operations with databag."""
+    """StatusesState CRUD operations with databag."""
 
     def __init__(
         self,
@@ -56,10 +53,6 @@ class StatusesState(Object):
         store the statuses information. The status objects are stored in the
         unit/app databag of the peer relation and then used during the
         collect-status events.
-
-        The component name is the name of the component that this object is
-        related to. This is used in serialisation in the databag, to classify
-        the statuses by component.
 
         The parent is used to provide an access to Ops.
         """
