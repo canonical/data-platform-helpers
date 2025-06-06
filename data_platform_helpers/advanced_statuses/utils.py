@@ -7,6 +7,6 @@ from ops.model import StatusBase
 from data_platform_helpers.advanced_statuses.models import StatusObject
 
 
-def as_status(status: StatusObject):
+def as_status(status: StatusObject) -> StatusBase:
     """Transform an extended status object into an Ops Status Object."""
     return StatusBase.from_name(status.status, status.message)

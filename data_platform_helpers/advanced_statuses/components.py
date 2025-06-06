@@ -64,7 +64,7 @@ class StatusesState(Object):
         """Access the relation object."""
         return self.model.get_relation(self.status_relation_name)
 
-    def databag(self, scope: Scope) -> RelationDataContent | None:
+    def _databag(self, scope: Scope) -> RelationDataContent | None:
         """Accesses the databag in the right scope."""
         if not self.relation:
             return None
@@ -77,10 +77,12 @@ class StatusesState(Object):
     def add(self, status: StatusObject, scope: Scope, component: str) -> None:
         """Adds a status to the component."""
         if scope == "app" and not self.model.unit.is_leader():
-            logger.warning("Cannot add app status with non-leader unit.")
+            logger.warning("Cannot add app status on a non-leader unit.")
             return
-        if (databag := self.databag(scope)) is None:
-            logger.warning("No databag present for statuses, information lost for next events.")
+        if (databag := self._databag(scope)) is None:
+            logger.warning(
+                "No databag present for statuses, the status could not be persisted for use in next events."
+            )
             return
         current_data = StatusObjectList.model_validate_json(databag.get(component, "[]"))
 
@@ -105,12 +107,14 @@ class StatusesState(Object):
         This overrides all statuses in the databag.
         """
         if scope == "app" and not self.model.unit.is_leader():
-            logger.warning("Cannot set app status with non-leader unit.")
+            logger.warning("Cannot set app status on a non-leader unit.")
             return
-        if (databag := self.databag(scope)) is None:
-            logger.warning("No databag present for statuses, information lost for next events.")
+        if (databag := self._databag(scope)) is None:
+            logger.warning(
+                "No databag present for statuses, the status could not be persisted for use in next events."
+            )
             return
-        databag.update({component: StatusObjectList([status]).model_dump_json()})
+        databag.update({component: StatusObjectList(root=[status]).model_dump_json()})
 
     def delete(self, status: StatusObject, scope: Scope, component: str) -> None:
         """Deletes a status from the component.
@@ -118,10 +122,12 @@ class StatusesState(Object):
         If the status is not present, log this information.
         """
         if scope == "app" and not self.model.unit.is_leader():
-            logger.warning("Cannot delete app status with non-leader unit.")
+            logger.warning("Cannot delete app status on a non-leader unit.")
             return
-        if (databag := self.databag(scope)) is None:
-            logger.warning("No databag present for statuses, information lost for next events.")
+        if (databag := self._databag(scope)) is None:
+            logger.warning(
+                "No databag present for statuses, the status could not be persisted for use in next events."
+            )
             return
         try:
             current_data = StatusObjectList.model_validate_json(databag.get(component, "[]"))
@@ -136,10 +142,12 @@ class StatusesState(Object):
     def clear(self, scope: Scope, component: str) -> None:
         """Clears all statuses from the component."""
         if scope == "app" and not self.model.unit.is_leader():
-            logger.warning("Cannot clear app status with non-leader unit.")
+            logger.warning("Cannot clear app status on a non-leader unit.")
             return
-        if (databag := self.databag(scope)) is None:
-            logger.warning("No databag present for statuses, information lost for next events.")
+        if (databag := self._databag(scope)) is None:
+            logger.warning(
+                "No databag present for statuses, the status could not be persisted for use in next events."
+            )
             return
         databag.update({component: "[]"})
 
@@ -158,18 +166,17 @@ class StatusesState(Object):
          * running_status_only: Do we want only running statuses?
          * running_status_type: If we want running statuses, which kind?
         """
-        if (databag := self.databag(scope)) is None:
+        if (databag := self._databag(scope)) is None:
             logger.warning("No databag present for statuses, information lost for next events.")
             return StatusObjectList(root=[])
         current_data = StatusObjectList.model_validate_json(databag.get(component, "[]"))
+
         if not running_status_only:
             return current_data
-        match running_status_type:
-            case "all":
-                return StatusObjectList(root=[status for status in current_data if status.running])
-            case _:
-                return StatusObjectList(
-                    root=[
-                        status for status in current_data if status.running == running_status_type
-                    ]
-                )
+
+        if running_status_type == "all":
+            return StatusObjectList(root=[status for status in current_data if status.running])
+
+        return StatusObjectList(
+            root=[status for status in current_data if status.running == running_status_type]
+        )

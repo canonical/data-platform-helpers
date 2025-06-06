@@ -66,11 +66,11 @@ class StatusHandler(Object):
     """
 
     def __init__(
-        self, charm: CharmBase, *components_in_priorty_order: ManagerStatusProtocol
+        self, charm: CharmBase, *component_in_priority_order: ManagerStatusProtocol
     ) -> None:
         super().__init__(parent=charm, key="status-handler")
         self.charm = charm
-        self.components: tuple[ManagerStatusProtocol, ...] = components_in_priorty_order
+        self.components: tuple[ManagerStatusProtocol, ...] = component_in_priority_order
         self.framework.observe(self.charm.on.collect_unit_status, self._on_collect_unit_status)
         self.framework.observe(self.charm.on.collect_app_status, self._on_collect_app_status)
         self.framework.observe(self.charm.on.status_detail_action, self._on_status_detail_action)
@@ -78,6 +78,7 @@ class StatusHandler(Object):
 
     @cached_property
     def _component_names(self) -> list[str]:
+        """Names of all the components defined."""
         return [component.name for component in self.components]
 
     @lru_cache
@@ -87,7 +88,7 @@ class StatusHandler(Object):
             raise ValueError(f"Invalid component name: {component_name}")
         return self._component_names.index(component_name)
 
-    def object(self, scope: Scope) -> Application | Unit:
+    def _object(self, scope: Scope) -> Application | Unit:
         """Return the correct component to use for displaying status."""
         match scope:
             case "app":
@@ -120,32 +121,45 @@ class StatusHandler(Object):
 
         Raises: if StatusObject isn't a running status.
         """
-        statuses = self._get_critical_statuses(scope)
+        critical_statuses = self._get_critical_statuses(scope)
         ops_status = as_status(status)
-        match status.running, statuses, is_action:
+        match status.running, critical_statuses, is_action:
             case None, _, _:
                 raise ValueError(f"Status {status} is not a running status.")
             case ("async", [], _) | ("async", _, True):
-                self.object(scope).status = ops_status
+                self._object(scope).status = ops_status
                 if statuses_state is None or component_name is None:
                     raise ValueError("No status component provided to store the async status.")
                 statuses_state.add(status, scope, component_name)
             case "async", _, _:
                 # We're not displaying the status because there's a more important status.
-                logger.info("not displaying status %s", status.model_dump())
+                logger.info(
+                    "Not displaying status %s, %s critical statuses in queue",
+                    status.model_dump(),
+                    len(critical_statuses),
+                )
             case "blocking", [], _:
-                self.object(scope).status = ops_status
+                self._object(scope).status = ops_status
             case "blocking", _, False:
                 # We're not displaying the status because there's a more important status.
-                logger.info("not displaying status %s", status.model_dump())
+                logger.info(
+                    "Not displaying status %s, %s critical statuses in queue",
+                    status.model_dump(),
+                    len(critical_statuses),
+                )
             case "blocking", _, True:
                 # We have critical statuses but this is an action so we
                 # override this status and log.
-                logger.info("Overriding critical status %s", statuses)
-                self.object(scope).status = ops_status
+                logger.info("Overriding critical status %s", critical_statuses)
+                self._object(scope).status = ops_status
 
     @lru_cache
     def _get_sorted_statuses(self, scope: Scope) -> list[tuple[str, StatusObject]]:
+        """Retrieves the list of all statuses and sorts them according to DA-147 and DA-161.
+
+        Statuses are ordered by status priority, and for a similar status type,
+        by component priority.
+        """
         statuses_by_components = StatusObjectDict.model_validate(
             {component.name: component.get_statuses(scope) for component in self.components}
         )
@@ -167,11 +181,12 @@ class StatusHandler(Object):
         )
 
     def _get_critical_statuses(self, scope: Scope) -> list[tuple[str, StatusObject]]:
+        """Retrieves all critical statuses."""
         """Gets all critical statuses for all components."""
         all_statuses = self._get_sorted_statuses(scope)
         return [status for status in all_statuses if status[1].approved_critical_component]
 
-    def _on_scope_statuses(self, scope: Scope, event: CollectStatusEvent):
+    def _process_on_scope_statuses(self, scope: Scope, event: CollectStatusEvent):
         """The core logic of the status handling for a given scope."""
         all_statuses = self._get_sorted_statuses(scope)
         critical_statuses = self._get_critical_statuses(scope)
@@ -186,18 +201,21 @@ class StatusHandler(Object):
             # We don't have any status so we return and ops will display an unknown status.
             return
 
+        # The list of all statuses is a list of tuples.
+        # Each tuple contains first the component and then the status, so we
+        # get the first element, and then the second item of the tuple.
         first_status = all_statuses[0][1]
 
-        number_of_important_statuses = len(
+        important_statuses = len(
             [status for status in all_statuses if status[1].status != "active"]
         )
         actions_to_run = len(list(filter(lambda x: x[1].action is not None, all_statuses)))
-        if number_of_important_statuses > 1:
+        if important_statuses > 1:
             # We have many statuses so we display the full line.
             event.add_status(
                 StatusBase.from_name(
                     first_status.status,
-                    f"{first_status.message}. Run `status-detail`: {actions_to_run} action required; {number_of_important_statuses - 1} additional statuses.",
+                    f"{first_status.message}. Run `status-detail`: {actions_to_run} action required; {important_statuses - 1} additional statuses.",
                 )
             )
         else:
@@ -214,7 +232,7 @@ class StatusHandler(Object):
         offering addition customisation over the ops default_status operation.
         """
         # log all statuses + set status + clear any blocking running statuses.
-        self._on_scope_statuses(scope="unit", event=event)
+        self._process_on_scope_statuses(scope="unit", event=event)
 
     def _on_collect_app_status(self, event: CollectStatusEvent) -> None:
         """Handles collect_app_status event.
@@ -225,7 +243,7 @@ class StatusHandler(Object):
         Note: prioritisation of statuses is performed according to DA147,
         offering addition customisation over the ops default_status operation.
         """
-        self._on_scope_statuses(scope="app", event=event)
+        self._process_on_scope_statuses(scope="app", event=event)
 
     def _recompute_statuses_for_scope(self, scope: Scope, manager: ManagerStatusProtocol):
         """Recomputes for a specific scope."""
@@ -322,7 +340,7 @@ class StatusHandler(Object):
                     "Status": status.status.capitalize(),
                     "Component Name": component_name,
                     "Message": status.message,
-                    "Action": status.check or "N/A",
+                    "Action": status.action or "N/A",
                     "Reason": status.check or "N/A",
                 }
             )
