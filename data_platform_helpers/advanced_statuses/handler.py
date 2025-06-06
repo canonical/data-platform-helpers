@@ -66,11 +66,11 @@ class StatusHandler(Object):
     """
 
     def __init__(
-        self, charm: CharmBase, *component_in_priority_order: ManagerStatusProtocol
+        self, charm: CharmBase, *components_in_priority_order: ManagerStatusProtocol
     ) -> None:
         super().__init__(parent=charm, key="status-handler")
         self.charm = charm
-        self.components: tuple[ManagerStatusProtocol, ...] = component_in_priority_order
+        self.components: tuple[ManagerStatusProtocol, ...] = components_in_priority_order
         self.framework.observe(self.charm.on.collect_unit_status, self._on_collect_unit_status)
         self.framework.observe(self.charm.on.collect_app_status, self._on_collect_app_status)
         self.framework.observe(self.charm.on.status_detail_action, self._on_status_detail_action)
