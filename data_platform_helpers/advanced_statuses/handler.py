@@ -66,11 +66,15 @@ class StatusHandler(Object):
     """
 
     def __init__(
-        self, charm: CharmBase, *components_in_priority_order: ManagerStatusProtocol
+        self,
+        charm: CharmBase,
+        *components_in_priority_order: ManagerStatusProtocol,
+        recompute_on_collect_status: bool = False,
     ) -> None:
         super().__init__(parent=charm, key="status-handler")
         self.charm = charm
         self.components: tuple[ManagerStatusProtocol, ...] = components_in_priority_order
+        self.recompute_on_collect_status = recompute_on_collect_status
         self.framework.observe(self.charm.on.collect_unit_status, self._on_collect_unit_status)
         self.framework.observe(self.charm.on.collect_app_status, self._on_collect_app_status)
         self.framework.observe(self.charm.on.status_detail_action, self._on_status_detail_action)
@@ -161,7 +165,12 @@ class StatusHandler(Object):
         by component priority.
         """
         statuses_by_components = StatusObjectDict.model_validate(
-            {component.name: component.get_statuses(scope) for component in self.components}
+            {
+                component.name: component.get_statuses(
+                    scope, recompute=self.recompute_on_collect_status
+                )
+                for component in self.components
+            }
         )
         current_statuses = [
             (component, item)
