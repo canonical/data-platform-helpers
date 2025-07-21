@@ -153,7 +153,6 @@ class StatusHandler(Object):
                 logger.info("Overriding critical status %s", critical_statuses)
                 self._object(scope).status = ops_status
 
-
     def _get_sorted_statuses(self, scope: Scope) -> list[tuple[str, StatusObject]]:
         """Retrieves the list of all statuses and sorts them according to DA-147 and DA-161.
 
