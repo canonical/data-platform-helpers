@@ -153,7 +153,6 @@ class StatusHandler(Object):
                 logger.info("Overriding critical status %s", critical_statuses)
                 self._object(scope).status = ops_status
 
-    @lru_cache
     def _get_sorted_statuses(self, scope: Scope) -> list[tuple[str, StatusObject]]:
         """Retrieves the list of all statuses and sorts them according to DA-147 and DA-161.
 
@@ -189,16 +188,19 @@ class StatusHandler(Object):
             ),
         )
 
-    def _get_critical_statuses(self, scope: Scope) -> list[tuple[str, StatusObject]]:
+    def _get_critical_statuses(
+        self, scope: Scope, all_statuses: list[tuple[str, StatusObject]] | None = None
+    ) -> list[tuple[str, StatusObject]]:
         """Retrieves all critical statuses."""
         """Gets all critical statuses for all components."""
-        all_statuses = self._get_sorted_statuses(scope)
+        if all_statuses is None:
+            all_statuses = self._get_sorted_statuses(scope)
         return [status for status in all_statuses if status[1].approved_critical_component]
 
     def _process_on_scope_statuses(self, scope: Scope, event: CollectStatusEvent):
         """The core logic of the status handling for a given scope."""
         all_statuses = self._get_sorted_statuses(scope)
-        critical_statuses = self._get_critical_statuses(scope)
+        critical_statuses = self._get_critical_statuses(scope, all_statuses=all_statuses)
 
         if critical_statuses:
             # When we have critical statuses, we display it right away.
