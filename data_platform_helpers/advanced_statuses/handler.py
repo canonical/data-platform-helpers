@@ -188,7 +188,9 @@ class StatusHandler(Object):
             ),
         )
 
-    def _get_critical_statuses(self, scope: Scope, all_statuses: list[tuple[str, StatusObject]] | None = None) -> list[tuple[str, StatusObject]]:
+    def _get_critical_statuses(
+        self, scope: Scope, all_statuses: list[tuple[str, StatusObject]] | None = None
+    ) -> list[tuple[str, StatusObject]]:
         """Retrieves all critical statuses."""
         """Gets all critical statuses for all components."""
         if all_statuses is None:
