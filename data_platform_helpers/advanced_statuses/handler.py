@@ -298,8 +298,8 @@ class StatusHandler(Object):
         event.set_results(
             {
                 "json-output": {
-                    "app": self.json_output(current_app_statuses),
-                    "unit": self.json_output(current_unit_statuses),
+                    "app": self.json_output(scope="app"),
+                    "unit": self.json_output(scope="unit"),
                 },
             }
         )
@@ -339,20 +339,13 @@ class StatusHandler(Object):
 
         return out_f.getvalue()
 
-    @staticmethod
     def json_output(
-        statuses: list[tuple[str, StatusObject]],
-    ) -> list[dict[str, str]]:
-        """Formats in json."""
-        res: list[dict[str, str]] = []
-        for component_name, status in statuses:
-            res.append(
-                {
-                    "Status": status.status.capitalize(),
-                    "Component Name": component_name,
-                    "Message": status.message,
-                    "Action": status.action or "N/A",
-                    "Reason": status.check or "N/A",
-                }
-            )
-        return res
+        self,
+        scope: Scope,
+    ):
+        """Returns the JSON output of the statuses for a given scope."""
+        statuses_by_components = StatusObjectDict.model_validate(
+            {component.name: component.get_statuses(scope) for component in self.components}
+        )
+
+        return json.dumps(statuses_by_components.model_dump(mode="json"))
