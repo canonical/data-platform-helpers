@@ -287,38 +287,8 @@ class StatusHandler(Object):
 
         event.log(f"{'Recomputed' if recompute else 'Stored'} statuses:")
 
-        app_statuses_by_components = StatusObjectDict.model_validate(
-            {component.name: component.get_statuses("app") for component in self.components}
-        )
-        current_statuses = [
-            (component, item)
-            for component, statuses in app_statuses_by_components.items()
-            for item in statuses
-        ]
-
-        current_app_statuses = sorted(
-            itertools.chain(current_statuses),
-            key=lambda status: (
-                -PRIORITIES.get(status[1].status, 0),
-                self._component_priority(status[0]),
-            ),
-        )
-        unit_statuses_by_components = StatusObjectDict.model_validate(
-            {component.name: component.get_statuses("unit") for component in self.components}
-        )
-        current_statuses = [
-            (component, item)
-            for component, statuses in unit_statuses_by_components.items()
-            for item in statuses
-        ]
-        current_unit_statuses = sorted(
-            itertools.chain(current_statuses),
-            key=lambda status: (
-                -PRIORITIES.get(status[1].status, 0),
-                self._component_priority(status[0]),
-            ),
-        )
-
+        current_app_statuses = self._get_sorted_statuses(scope="app")
+        current_unit_statuses = self._get_sorted_statuses(scope="unit")
         logger.debug(f"{current_app_statuses=}")
         logger.debug(f"{current_unit_statuses=}")
 
@@ -328,8 +298,8 @@ class StatusHandler(Object):
         event.set_results(
             {
                 "json-output": {
-                    "app": json.dumps(app_statuses_by_components.model_dump(mode="json")),
-                    "unit": json.dumps(unit_statuses_by_components.model_dump(mode="json")),
+                    "app": json.dumps(self.json_output(current_app_statuses)),
+                    "unit": json.dumps(self.json_output(current_unit_statuses)),
                 },
             }
         )
@@ -368,3 +338,21 @@ class StatusHandler(Object):
         console.print(table)
 
         return out_f.getvalue()
+
+    @staticmethod
+    def json_output(
+        statuses: list[tuple[str, StatusObject]],
+    ) -> list[dict[str, str]]:
+        """Formats in json."""
+        res: list[dict[str, str]] = []
+        for component_name, status in statuses:
+            res.append(
+                {
+                    "Status": status.status.capitalize(),
+                    "Component Name": component_name,
+                    "Message": status.message,
+                    "Action": status.action or "N/A",
+                    "Reason": status.check or "N/A",
+                }
+            )
+        return res

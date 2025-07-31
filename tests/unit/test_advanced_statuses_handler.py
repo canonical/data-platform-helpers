@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import json
 from typing import Any
 
 import pytest
@@ -15,7 +16,6 @@ from data_platform_helpers.advanced_statuses.components import StatusesState
 from data_platform_helpers.advanced_statuses.handler import StatusHandler
 from data_platform_helpers.advanced_statuses.models import (
     StatusObject,
-    StatusObjectDict,
 )
 from data_platform_helpers.advanced_statuses.protocol import (
     ManagerStatusProtocol,
@@ -156,17 +156,14 @@ def test_multiple_statuses(context: testing.Context[MyCharm], state: testing.Sta
 
     context.run(context.on.action("status-detail"), out_bis)
     json_output = context.action_results["json-output"]
-    app_statuses = StatusObjectDict.model_validate_json(json_output['app'])
-    unit_statuses = StatusObjectDict.model_validate_json(json_output['unit'])
-    assert len(app_statuses.root["my-charm"].root) == 2
-    assert len(unit_statuses.root["my-charm"].root) == 1
+    app_statuses = json.loads(json_output["app"])
+    unit_statuses = json.loads(json_output["unit"])
+    assert len(app_statuses) == 2
+    assert len(unit_statuses) == 1
 
-    assert app_statuses.root["my-charm"].root[0].status == "blocked"
-    assert app_statuses.root["my-charm"].root[0].message == "blah"
-    assert app_statuses.root["my-charm"].root[1].status == "maintenance"
-    assert app_statuses.root["my-charm"].root[1].message == "running maintenance"
-    assert unit_statuses.root["my-charm"].root[0].status == "active"
-    assert unit_statuses.root["my-charm"].root[0].message == "running"
+    assert app_statuses[0]["Status"] == "Blocked"
+    assert app_statuses[1]["Status"] == "Maintenance"
+    assert unit_statuses[0]["Status"] == "Active"
 
 
 def test_multiple_components(context: testing.Context[MyCharm], state: testing.State):
@@ -181,18 +178,14 @@ def test_multiple_components(context: testing.Context[MyCharm], state: testing.S
 
     context.run(context.on.action("status-detail"), out_ter)
     json_output = context.action_results["json-output"]
-    app_statuses_by_components = StatusObjectDict.model_validate_json(json_output['app'])
-    unit_statuses_by_components = StatusObjectDict.model_validate_json(json_output['unit'])
-    
-    assert len(app_statuses_by_components.root['my-charm'].root) == 1
-    assert len(app_statuses_by_components.root['other-component'].root) == 1
-    assert len(unit_statuses_by_components.root['my-charm'].root) == 1
-    assert len(unit_statuses_by_components.root['other-component'].root) == 0
+    app_statuses = json.loads(json_output["app"])
+    unit_statuses = json.loads(json_output["unit"])
 
-    assert app_statuses_by_components.root['my-charm'].root[0].status == "maintenance"
-    assert app_statuses_by_components.root['my-charm'].root[0].message == "running maintenance"
-    assert app_statuses_by_components.root['other-component'].root[0].status == "blocked"
-    assert app_statuses_by_components.root['other-component'].root[0].message == "other component failed"
-    assert unit_statuses_by_components.root['my-charm'].root[0].status == "active"
-    assert unit_statuses_by_components.root['my-charm'].root[0].message == "running"
-    assert unit_statuses_by_components.root['other-component'].root == []
+    assert len(app_statuses) == 2
+    assert len(unit_statuses) == 1
+
+    assert app_statuses[0]["Status"] == "Blocked"
+    assert app_statuses[0]["Component Name"] == "other-component"
+    assert app_statuses[1]["Status"] == "Maintenance"
+    assert app_statuses[1]["Component Name"] == "my-charm"
+    
