@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import json
 from typing import Any
 
 import pytest
@@ -155,12 +156,14 @@ def test_multiple_statuses(context: testing.Context[MyCharm], state: testing.Sta
 
     context.run(context.on.action("status-detail"), out_bis)
     json_output = context.action_results["json-output"]
-    assert len(json_output["app"]) == 2
-    assert len(json_output["unit"]) == 1
+    app_statuses = json.loads(json_output["app"])
+    unit_statuses = json.loads(json_output["unit"])
+    assert len(app_statuses) == 2
+    assert len(unit_statuses) == 1
 
-    assert json_output["app"][0]["Status"] == "Blocked"
-    assert json_output["app"][1]["Status"] == "Maintenance"
-    assert json_output["unit"][0]["Status"] == "Active"
+    assert app_statuses[0]["Status"] == "Blocked"
+    assert app_statuses[1]["Status"] == "Maintenance"
+    assert unit_statuses[0]["Status"] == "Active"
 
 
 def test_multiple_components(context: testing.Context[MyCharm], state: testing.State):
@@ -175,10 +178,14 @@ def test_multiple_components(context: testing.Context[MyCharm], state: testing.S
 
     context.run(context.on.action("status-detail"), out_ter)
     json_output = context.action_results["json-output"]
-    assert len(json_output["app"]) == 2
-    assert len(json_output["unit"]) == 1
+    app_statuses = json.loads(json_output["app"])
+    unit_statuses = json.loads(json_output["unit"])
 
-    assert json_output["app"][0]["Status"] == "Blocked"
-    assert json_output["app"][0]["Component Name"] == "other-component"
-    assert json_output["app"][1]["Status"] == "Maintenance"
-    assert json_output["app"][1]["Component Name"] == "my-charm"
+    assert len(app_statuses) == 2
+    assert len(unit_statuses) == 1
+
+    assert app_statuses[0]["Status"] == "Blocked"
+    assert app_statuses[0]["Component Name"] == "other-component"
+    assert app_statuses[1]["Status"] == "Maintenance"
+    assert app_statuses[1]["Component Name"] == "my-charm"
+    

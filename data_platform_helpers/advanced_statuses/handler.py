@@ -298,8 +298,8 @@ class StatusHandler(Object):
         event.set_results(
             {
                 "json-output": {
-                    "app": self.json_output(current_app_statuses),
-                    "unit": self.json_output(current_unit_statuses),
+                    "app": json.dumps(self.json_output(current_app_statuses)),
+                    "unit": json.dumps(self.json_output(current_unit_statuses)),
                 },
             }
         )

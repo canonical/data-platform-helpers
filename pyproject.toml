@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "data-platform-helpers"
-version = "0.1.6"
+version = "0.1.7"
 description = ""
 authors = ["Mia Altieri <mgaltier200@gmail.com>"]
 readme = "README.md"
