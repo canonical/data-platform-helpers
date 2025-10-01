@@ -41,7 +41,9 @@ How to use:
 """
 
 import logging
+from collections.abc import Callable
 
+from ops import RelationChangedEvent
 from ops.charm import CharmBase
 from ops.framework import Object
 from ops.model import Unit
@@ -82,6 +84,7 @@ class CrossAppVersionChecker(Object):
         version: str,
         relations_to_check: list[str],
         version_validity_range: dict | None = None,
+        callback: Callable[[RelationChangedEvent], None] | None = None,
     ) -> None:
         """Constructor for CrossAppVersionChecker.
 
@@ -93,24 +96,39 @@ class CrossAppVersionChecker(Object):
             version_validity_range: (Optional Dict), a list of ranges for valid version ranges.
                 If not provided it is assumed that relations on the provided interface must have
                 the same version.
+            callback: (Optional callable) A callback that will be run on
+                relation changed. This allows for automatically running some checks
+                and actions on relation changed. Those checks/actions should be
+                related to versioning. This should be a lambda function so that
+                it captures the context of the caller. It will be given the event as a parameter.
+                Example: callback = lambda event: self.act_on_version_updated(event)
         """
         super().__init__(charm, None)
         self.charm = charm
         # Future PR: upgrade this to a dictionary name versions
         self.version = version
         self.relations_to_check = relations_to_check
+        self.callback = callback
 
         for rel in relations_to_check:
             self.framework.observe(
                 charm.on[rel].relation_created,
                 self.set_version_on_relation_created,
             )
+            if callable:
+                self.framework.observe(charm.on[rel].relation_changed, self.handle_callback)
 
         # this feature has yet to be implemented, MongoDB does not need it and it is unclear if
         # this will be extended to other charms. If this code is extended to other charms and
         # there is a valid usecase we will use the `version_validity_range` variable in the
         # function `get_invalid_versions`
         self.version_validity_range = version_validity_range
+
+    def handle_callback(self, event: RelationChangedEvent):
+        """Calls the callback and returns."""
+        if not self.callback:
+            return
+        self.callback(event)
 
     def get_invalid_versions(self) -> list[tuple[str, str]]:
         """Returns a list of (app name, version number) pairs, if the version number mismatches.
