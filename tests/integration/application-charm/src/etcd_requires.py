@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import ops
 from charmlibs.interfaces.tls_certificates import Certificate
-from charms.data_platform_libs.v1.data_interfaces import (
+from data_platform_helpers.interfaces import (
     DataContractV1,
     RequirerCommonModel,
     RequirerDataContractV1,
