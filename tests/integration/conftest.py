@@ -20,7 +20,7 @@ LXD_CONTROLLER = "lxd-controller"
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--os-series", help="Ubuntu series for dp libs charm (e.g. jammy)", default="jammy"
+        "--os-series", help="Ubuntu series for dp libs charm (e.g. noble)", default="noble"
     )
     parser.addoption(
         "--build-bases-index",
