@@ -15,7 +15,7 @@ from charmlibs.interfaces.tls_certificates import (
 )
 from jubilant import Juju, TaskError
 
-from tests.jubilant_helpers import (
+from tests.integration.jubilant_helpers import (
     TLSType,
     apps_active_and_agents_idle,
     download_client_certificate_from_unit,
