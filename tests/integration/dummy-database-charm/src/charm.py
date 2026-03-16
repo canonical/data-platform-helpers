@@ -13,7 +13,7 @@ import secrets
 import string
 from typing import Annotated
 
-from data_plaform_helpers.interfaces import (
+from data_platform_helpers.interfaces import (
     DataContractV1,
     ExtraSecretStr,
     OpsOtherPeerUnitRepository,

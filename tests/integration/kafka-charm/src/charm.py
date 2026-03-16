@@ -11,7 +11,7 @@ of the libraries in this repository.
 import logging
 import os
 
-from data_plaform_helpers.interfaces import (
+from data_platform_helpers.interfaces import (
     DataContractV1,
     KafkaRequestModel,
     KafkaResponseModel,

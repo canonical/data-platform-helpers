@@ -11,7 +11,7 @@ import logging
 import secrets
 import string
 
-from data_plaform_helpers.interfaces import (
+from data_platform_helpers.interfaces import (
     DataContractV1,
     RequirerCommonModel,
     ResourceEntityRequestedEvent,
