@@ -157,17 +157,17 @@ def copy_data_interfaces_library_into_charm(ops_test: OpsTest):
     """Copy the data_interfaces library to the different charm folder."""
     library_path = "data_platform_helpers"
     install_path = "tests/integration/database-charm/src/" + library_path
-    shutil.copytree(library_path, install_path)
+    shutil.copytree(library_path, install_path, dirs_exist_ok=True)
     install_path = "tests/integration/dummy-database-charm/src/" + library_path
-    shutil.copytree(library_path, install_path)
+    shutil.copytree(library_path, install_path, dirs_exist_ok=True)
     install_path = "tests/integration/kafka-charm/src/" + library_path
-    shutil.copytree(library_path, install_path)
+    shutil.copytree(library_path, install_path, dirs_exist_ok=True)
     install_path = "tests/integration/application-charm/src/" + library_path
-    shutil.copytree(library_path, install_path)
+    shutil.copytree(library_path, install_path, dirs_exist_ok=True)
     install_path = "tests/integration/opensearch-charm/src/" + library_path
-    shutil.copytree(library_path, install_path)
+    shutil.copytree(library_path, install_path, dirs_exist_ok=True)
     install_path = "tests/integration/kafka-connect-charm/src/" + library_path
-    shutil.copytree(library_path, install_path)
+    shutil.copytree(library_path, install_path, dirs_exist_ok=True)
 
 
 @pytest.fixture(scope="module")
