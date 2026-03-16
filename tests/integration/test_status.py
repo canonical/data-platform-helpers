@@ -18,7 +18,7 @@ APPLICATION_APP_2 = "app-v1-ii"
 DATABASE_APP_NAME = "database-v1"
 APP_NAMES = [APPLICATION_APP_1, APPLICATION_APP_2, DATABASE_APP_NAME]
 DATABASE_APP_METADATA = yaml.safe_load(
-    Path("./tests/v0/integration/database-charm/metadata.yaml").read_text()
+    Path("./tests/integration/database-charm/metadata.yaml").read_text()
 )
 RELATION_NAME = "first-database-db"
 
@@ -113,7 +113,7 @@ async def test_raise_status(ops_test: OpsTest):
     )
 
     status_schema_raw = json.load(
-        open("tests/v0/integration/database-charm/src/status-schema.json")
+        open("tests/integration/database-charm/src/status-schema.json")
     )
     status_schema_map = {o.get("code"): o for o in status_schema_raw.get("statuses", [])}
 

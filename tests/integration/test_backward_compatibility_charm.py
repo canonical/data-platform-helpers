@@ -17,7 +17,7 @@ DATABASE_APP_NAME = "database"
 APP_NAMES = [APPLICATION_APP_NAME, DATABASE_APP_NAME]
 
 DATABASE_APP_METADATA = yaml.safe_load(
-    Path("./tests/v1/integration/database-charm/metadata.yaml").read_text()
+    Path("./tests/integration/database-charm/metadata.yaml").read_text()
 )
 
 
