@@ -563,7 +563,7 @@ class ApplicationCharm(CharmBase):
         """Sets the MTLS cert for the relation."""
         cmd = f'openssl req -new -newkey rsa:2048 -days 365 -nodes -subj "/CN={self.unit.name.replace("/", "-")}" -x509 -keyout client.key -out client.pem'
         subprocess.check_output(cmd, shell=True, universal_newlines=True)
-        cert = open("./client.pem", "r").read()
+        cert = open("./client.pem").read()
         relation = self.model.get_relation("kafka-split-pattern-client")
         assert relation
         model = self.kafka_split_pattern.interface.build_model(

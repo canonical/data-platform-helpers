@@ -76,8 +76,7 @@ class KafkaCharm(CharmBase):
         """Get secret from the secret storage."""
         if scope == "app":
             return self.app_peer_data.get(key, None)
-        else:
-            raise RuntimeError("Unknown secret scope.")
+        raise RuntimeError("Unknown secret scope.")
 
     def set_secret(self, scope: str, key: str, value: str | None) -> None:
         """Set secret in the secret storage."""

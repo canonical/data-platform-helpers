@@ -6,9 +6,9 @@ import argparse
 import logging
 import shlex
 import shutil
+import subprocess
 from datetime import datetime
 from pathlib import Path
-import subprocess
 
 import pytest
 from pytest_operator.plugin import OpsTest

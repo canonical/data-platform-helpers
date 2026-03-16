@@ -13,7 +13,9 @@
 # limitations under the License.
 r"""Library to manage the relation for the data-platform products.
 
-This V1 has been specified in https://docs.google.com/document/d/1lnuonWnoQb36RWYwfHOBwU0VClLbawpTISXIC_yNKYo, and should be backward compatible with v0 clients.
+This V1 has been specified in
+https://docs.google.com/document/d/1lnuonWnoQb36RWYwfHOBwU0VClLbawpTISXIC_yNKYo,
+and should be backward compatible with v0 clients.
 
 This library contains the Requires and Provides classes for handling the relation
 between an application and multiple managed application supported by the data-team:
@@ -31,13 +33,17 @@ class ExtendedCommonModel(RequirerCommonModel):
     operator_password: ExtraSecretStr
 ```
 
-Secret groups are handled using annotated types. If you wish to add extra secret groups, please follow the following model. The string metadata represents the secret group name, and `OptionalSecretStr` is a TypeAlias for `SecretStr | None`. Finally, `SecretStr` represents a field validating the URI pattern `secret:.*`
+Secret groups are handled using annotated types.
+If you wish to add extra secret groups, please follow the following model.
+The string metadata represents the secret group name, and `OptionalSecretStr` is a TypeAlias for
+`SecretStr | None`. Finally, `SecretStr` represents a field validating the URI pattern `secret:.*`
 
 ```python
 MyGroupSecretStr = Annotated[OptionalSecretStr, Field(exclude=True, default=None), "mygroup"]
 ```
 
-Fields not specified as OptionalSecretStr and extended with a group name in the metadata will NOT get serialised.
+Fields not specified as OptionalSecretStr and extended with a group name in the metadata will NOT
+get serialised.
 
 
 #### Requirer Charm
@@ -77,7 +83,7 @@ class ClientCharm(CharmBase):
             self,"database", requests, response_model=ResourceProviderModel
         )
         self.framework.observe(self.database.on.resource_created, self._on_resource_created)
-        self.framework.observe(self.database.on.resource_entity_created, self._on_resource_entity_created)
+        self.framework.observe(self.database.on.resource_entity_created, self._on_entity_created)
 
     def _on_resource_created(self, event: ResourceCreatedEvent) -> None:
         # Event triggered when a new database is created.
@@ -88,7 +94,7 @@ class ClientCharm(CharmBase):
         password = event.response.password
         ...
 
-    def _on_resource_entity_created(self, event: ResourceCreatedEvent) -> None:
+    def _on_entity_created(self, event: ResourceCreatedEvent) -> None:
         # Event triggered when a new entity is created.
         ...
 
@@ -97,7 +103,8 @@ multiple requests, specified as a list.
 On the Requirer side, each response will trigger one custom event for that response.
 This way, it allows for more strategic events to be emitted according to the request.
 
-As show above, the library provides some custom events to handle specific situations, which are listed below:
+As show above, the library provides some custom events to handle specific situations,
+which are listed below:
 -  resource_created: event emitted when the requested database is created.
 -  resource_entity_created: event emitted when the requested entity is created.
 -  endpoints_changed: event emitted when the read/write endpoints of the database have changed.

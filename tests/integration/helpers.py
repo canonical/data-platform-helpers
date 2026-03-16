@@ -3,7 +3,6 @@
 # See LICENSE file for licensing details.
 import json
 from time import sleep
-from typing import Dict, List, Optional
 
 import yaml
 from pytest_operator.plugin import OpsTest
@@ -11,7 +10,7 @@ from pytest_operator.plugin import OpsTest
 PROV_SECRET_PREFIX = "secret-"
 
 
-async def get_juju_secret(ops_test: OpsTest, secret_uri: str) -> Dict[str, str]:
+async def get_juju_secret(ops_test: OpsTest, secret_uri: str) -> dict[str, str]:
     """Retrieve juju secret."""
     secret_unique_id = secret_uri.split("/")[-1]
     complete_command = f"show-secret {secret_uri} --reveal --format=json"
@@ -19,7 +18,7 @@ async def get_juju_secret(ops_test: OpsTest, secret_uri: str) -> Dict[str, str]:
     return json.loads(stdout)[secret_unique_id]["content"]["Data"]
 
 
-async def list_juju_secrets(ops_test: OpsTest) -> List[str]:
+async def list_juju_secrets(ops_test: OpsTest) -> list[str]:
     """Check if a juju secret does not exist."""
     _, stdout, _ = await ops_test.juju("list-secrets")
     data = stdout.split("\n")
@@ -161,7 +160,7 @@ async def get_connection_info(
 
 async def get_alias_from_relation_data(
     ops_test: OpsTest, unit_name: str, related_unit_name: str
-) -> Optional[str]:
+) -> str | None:
     """Get the alias that the unit assigned to the related unit application/cluster.
 
     Args:
@@ -209,7 +208,7 @@ async def get_application_relation_data(
     relation_alias: str | None = None,
     related_endpoint: str | None = None,
     app_or_unit: str = "app",
-) -> Optional[str]:
+) -> str | None:
     """Get relation data for an application.
 
     Args:
@@ -265,8 +264,7 @@ async def get_application_relation_data(
         )
     if app_or_unit == "app":
         return relation_data[0]["application-data"].get(key)
-    else:
-        return relation_data[0]["local-unit"].get("data", {}).get(key)
+    return relation_data[0]["local-unit"].get("data", {}).get(key)
 
 
 async def check_logs(ops_test: OpsTest, strings: list[str], limit: int = 10) -> bool:
@@ -280,7 +278,7 @@ async def check_logs(ops_test: OpsTest, strings: list[str], limit: int = 10) -> 
     return False
 
 
-async def get_secret_by_label(ops_test, label: str, owner: str = "") -> Dict[str, str]:
+async def get_secret_by_label(ops_test, label: str, owner: str = "") -> dict[str, str]:
     secrets_raw = await ops_test.juju("list-secrets")
     secret_ids = [
         secret_line.split()[0] for secret_line in secrets_raw[1].split("\n")[1:] if secret_line

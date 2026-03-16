@@ -113,7 +113,7 @@ async def test_raise_status(ops_test: OpsTest):
     )
 
     status_schema_raw = json.load(
-        open("tests/v0/integration/database-charm/src/status-schema.json", "r")
+        open("tests/v0/integration/database-charm/src/status-schema.json")
     )
     status_schema_map = {o.get("code"): o for o in status_schema_raw.get("statuses", [])}
 

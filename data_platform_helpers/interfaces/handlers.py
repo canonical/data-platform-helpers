@@ -57,7 +57,7 @@ from data_platform_helpers.interfaces.types import OptionalPathLike, RelationSta
 from data_platform_helpers.interfaces.utils import gen_hash, get_encoded_dict
 
 try:
-    import psycopg2
+    import psycopg2  # type: ignore[reportMissingModuleSource]
 except ImportError:
     psycopg2 = None
 
@@ -179,9 +179,7 @@ class EventHandlers(Object):
         event.remove_revision()
 
     @abstractmethod
-    def _handle_event(
-        self,
-    ):
+    def _handle_event(self, *args, **kwargs):
         """Handles the event and reacts accordingly."""
         pass
 
@@ -284,9 +282,9 @@ class ResourceProviderEventHandler(EventHandlers, Generic[TRequirerCommonModel])
             request_model: The request model that is expected to be received.
             unique_key: An optional unique key for that object.
             mtls_enabled: If True, means the server supports MTLS integration.
-            bulk_event: If this is true, only one event will be emitted with all requests in the case of a v1 requirer.
+            bulk_event: Only one event will be emitted with all requests in the case of a v1 requirer.
             status_schema_path: Path to the JSON file defining status/error codes and their definitions.
-            resource_aliases: An optional list of strings that defines additional aliases for the resource field.
+            resource_aliases: An optional list of strings that defines extra aliases for the resource field.
         """
         super().__init__(charm, relation_name, unique_key)
         self.component = self.charm.app
@@ -315,7 +313,7 @@ class ResourceProviderEventHandler(EventHandlers, Generic[TRequirerCommonModel])
         if not schema_path.exists():
             raise FileNotFoundError(f"Can't locate status schema file: {schema_path}")
 
-        content = json.load(open(schema_path, "r"))
+        content = json.load(open(schema_path))
 
         return {s["code"]: RelationStatus(**s) for s in content.get("statuses", [])}
 
@@ -1039,6 +1037,12 @@ class ResourceRequirerEventHandler(EventHandlers, Generic[TResourceProviderModel
                 raise ValueError(f"No request matching the response with response_id {response_id}")
             self._handle_event(event, repository, request, response)
 
+        self._handle_statuses(event, repository, data)
+
+    def _handle_statuses(
+        self, event: RelationChangedEvent, repository: OpsRelationRepository, data: str | None
+    ):
+        """Handles statuses for this event."""
         # Retrieve old statuses from "data"
         old_data = json.loads(data or "{}")
         old_statuses = old_data.get(STATUS_FIELD, {})
@@ -1079,11 +1083,11 @@ class ResourceRequirerEventHandler(EventHandlers, Generic[TResourceProviderModel
             return
 
         # Store new state of the statuses in the "data" field
-        data = get_encoded_dict(event.relation, self.component, "data") or {}
+        new_data = get_encoded_dict(event.relation, self.component, "data") or {}
         store_new_data(
-            event.relation,
-            self.component,
-            data,
+            relation=event.relation,
+            component=self.component,
+            new_data=new_data,
             short_uuid=None,
             global_data={
                 STATUS_FIELD: {

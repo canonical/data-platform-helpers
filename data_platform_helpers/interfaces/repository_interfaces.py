@@ -107,7 +107,11 @@ class RepositoryInterface(Generic[TRepository, TCommon]):
     def build_model(
         self,
         relation_id: int,
-        model: type[TCommon] | type[TCommonBis] | TypeAdapter[TCommonBis] | None = None,
+        model: type[TCommon]
+        | type[TCommonBis]
+        | TypeAdapter[TCommonBis]
+        | TypeAdapter[TCommon]
+        | None = None,
         component: Unit | Application | None = None,
     ) -> TCommon | TCommonBis:
         """Builds a model using the repository for that relation."""
@@ -185,8 +189,9 @@ class OpsOtherPeerUnitRepositoryInterface(
 
 
 def build_model(
-    repository: AbstractRepository, model: type[TCommon] | TypeAdapter[TCommon]
-) -> TCommon:
+    repository: AbstractRepository,
+    model: type[TCommon] | TypeAdapter[TCommon] | type[TCommonBis] | TypeAdapter[TCommonBis],
+) -> TCommon | TCommonBis:
     """Builds a common model using the provided repository and provided model structure."""
     data = repository.get_data() or {}
 

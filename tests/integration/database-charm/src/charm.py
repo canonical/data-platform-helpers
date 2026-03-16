@@ -13,7 +13,7 @@ import secrets
 import string
 from random import randrange
 from time import sleep
-from typing import Annotated, Optional
+from typing import Annotated
 
 import psycopg2
 from data_plaform_helpers.interfaces import (
@@ -148,7 +148,7 @@ class DatabaseCharm(CharmBase):
         logger.info("Update status")
 
     @property
-    def peer_relation(self) -> Optional[Relation]:
+    def peer_relation(self) -> Relation | None:
         """The cluster peer relation."""
         return self.model.get_relation(PEER)
 
@@ -253,11 +253,11 @@ class DatabaseCharm(CharmBase):
         assert self.model.get_binding("database").network
         assert self.model.get_binding("database").network.bind_address
         logger.info(
-            (
+
                 f"Charm binding {self.model.get_binding('database')}, "
                 f"network: {self.model.get_binding('database').network}, "
                 f"IP: {self.model.get_binding('database').network.bind_address}"
-            )
+
         )
 
         response = ResourceProviderModel(

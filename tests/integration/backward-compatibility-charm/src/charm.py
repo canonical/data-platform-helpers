@@ -10,12 +10,11 @@ This uses the v0 of data interfaces to ensure that the compatibility is not brok
 
 import logging
 
+from charms.data_platform_libs.v0.data_interfaces import DatabaseCreatedEvent, DatabaseRequires
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus
-
-from charms.data_platform_libs.v0.data_interfaces import DatabaseCreatedEvent, DatabaseRequires
 
 logger = logging.getLogger(__name__)
 

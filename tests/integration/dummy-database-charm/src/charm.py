@@ -11,7 +11,7 @@ of the libraries in this repository.
 import logging
 import secrets
 import string
-from typing import Annotated, Optional
+from typing import Annotated
 
 from data_plaform_helpers.interfaces import (
     DataContractV1,
@@ -92,7 +92,7 @@ class DatabaseCharm(CharmBase):
         self.framework.observe(self.on.delete_peer_secret_action, self._on_delete_peer_secret)
 
     @property
-    def peer_relation(self) -> Optional[Relation]:
+    def peer_relation(self) -> Relation | None:
         """The cluster peer relation."""
         return self.model.get_relation(PEER)
 
