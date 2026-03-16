@@ -86,7 +86,7 @@ def copy_v0_data_interfaces_library_into_charm(ops_test: OpsTest):
 @pytest.fixture(scope="module", autouse=True)
 def copy_data_interfaces_library_into_charm(ops_test: OpsTest):
     """Copy the data_interfaces library to the different charm folder."""
-    library_path = "data_plaform_helpers"
+    library_path = "data_platform_helpers"
     install_path = "tests/integration/database-charm/src/" + library_path
     shutil.copytree(library_path, install_path)
     install_path = "tests/integration/dummy-database-charm/src/" + library_path
