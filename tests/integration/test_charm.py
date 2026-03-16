@@ -702,7 +702,7 @@ async def test_two_applications_dont_share_the_same_relation_data(
 
     # Deploy another application.
     await ops_test.model.deploy(
-        application_charm, application_name=another_application_app_name, series="jammy"
+        application_charm, application_name=another_application_app_name, series="noble"
     )
     await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
 

@@ -52,7 +52,7 @@ async def test_deploy_charms(
             },
             application_name=DATABASE_APP_NAME,
             num_units=1,
-            series="jammy",
+            series="noble",
         ),
     )
 

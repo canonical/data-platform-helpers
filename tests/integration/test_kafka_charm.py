@@ -32,16 +32,16 @@ async def test_deploy_charms(ops_test: OpsTest, application_charm, kafka_charm):
     # set data in the relation application databag using only the leader unit).
     await asyncio.gather(
         ops_test.model.deploy(
-            application_charm, application_name=APPLICATION_APP_NAME, num_units=1, series="jammy"
+            application_charm, application_name=APPLICATION_APP_NAME, num_units=1, series="noble"
         ),
         ops_test.model.deploy(
             application_charm,
             application_name=APPLICATION_APP_NAME_SPLIT,
             num_units=1,
-            series="jammy",
+            series="noble",
         ),
         ops_test.model.deploy(
-            kafka_charm, application_name=KAFKA_APP_NAME, num_units=1, series="jammy"
+            kafka_charm, application_name=KAFKA_APP_NAME, num_units=1, series="noble"
         ),
     )
     await ops_test.model.wait_for_idle(
