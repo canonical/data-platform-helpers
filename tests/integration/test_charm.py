@@ -270,7 +270,6 @@ async def test_peer_relation_secret_revisions(component, ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
-@pytest.mark.usefixtures("only_with_juju_secrets")
 @pytest.mark.parametrize("component", ["app", "unit"])
 async def test_peer_relation_set_secret(component, ops_test: OpsTest):
     """Testing peer relation using the DataPeer class."""
@@ -354,7 +353,6 @@ async def test_peer_relation_set_secret(component, ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
-@pytest.mark.usefixtures("only_with_juju_secrets")
 async def test_peer_relation_non_leader_unit_secrets(ops_test: OpsTest):
     """Testing peer relation using the DataPeer class."""
     # Setting and verifying two secret fields
@@ -723,7 +721,6 @@ async def test_two_applications_dont_share_the_same_relation_data(
     assert application_connection_string != another_application_connection_string
 
 
-@pytest.mark.usefixtures("only_with_juju_secrets")
 async def test_secrets_usage_correct_secrets(ops_test: OpsTest):
     requests = json.loads(
         await get_application_relation_data(
@@ -739,7 +736,6 @@ async def test_secrets_usage_correct_secrets(ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
-@pytest.mark.usefixtures("only_with_juju_secrets")
 async def test_database_roles_relation_with_charm_libraries_secrets(ops_test: OpsTest):
     """Test basic functionality of database-roles relation interface."""
     # Relate the charms and wait for them exchanging some connection data.
@@ -951,7 +947,6 @@ async def test_relation_secret_revisions(ops_test: OpsTest):
         ("tls", "true", "secret-tls", "True"),
     ],
 )
-@pytest.mark.usefixtures("only_with_juju_secrets")
 async def test_provider_get_set_delete_fields_secrets(
     field, value, relation_field, output, ops_test: OpsTest
 ):

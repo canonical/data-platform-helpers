@@ -150,7 +150,6 @@ async def test_kafka_bootstrap_server_changed(ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
-@pytest.mark.usefixtures("only_with_juju_secrets")
 async def test_kafka_mtls(ops_test: OpsTest):
     """Tests mtls-cert is set as a secret from the requirer side and proper event triggered on provider side."""
     # Relate the charms and wait for them exchanging some connection data.

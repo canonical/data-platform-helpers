@@ -123,7 +123,6 @@ async def test_kafka_connect_credentials_change(ops_test: OpsTest, request: pyte
 
 
 @pytest.mark.abort_on_fail
-@pytest.mark.usefixtures("only_with_juju_secrets")
 async def test_kafka_connect_endpoints_change(ops_test: OpsTest, request: pytest.FixtureRequest):
     """Test Kafka Connect endpoints change functionality."""
     # Get current password
