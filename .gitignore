@@ -1,5 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
+tests/integration/application-charm/src/data_platform_helpers
+tests/integration/database-charm/src/data_platform_helpers
+tests/integration/kafka-charm/src/data_platform_helpers
+tests/integration/backward-compatibility-charm/lib/charms/data_platform_libs/v0/data_interfaces.py
+tests/integration/opensearch-charm/src/data_platform_helpers
+tests/integration/kafka-connect-charm/src/data_platform_helpers
+tests/integration/dummy-database-charm/src/data_platform_helpers
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
