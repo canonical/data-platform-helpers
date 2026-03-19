@@ -27,7 +27,7 @@ This library exposes basic default models that can be used in most cases.
 If you need more complex models, you can subclass them.
 
 ```python
-from charms.data_platform_libs.v1.data_interfaces import RequirerCommonModel, ExtraSecretStr
+from data_platform_helpers.interfaces import RequirerCommonModel, ExtraSecretStr
 
 class ExtendedCommonModel(RequirerCommonModel):
     operator_password: ExtraSecretStr
@@ -54,7 +54,7 @@ and methods to consume the application related data.
 
 
 ```python
-from charms.data_platform_libs.v1.data_interfaces import (
+from data_platform_helpers.interfaces import (
     RequirerCommonModel,
     RequirerDataContractV1,
     ResourceCreatedEvent,
@@ -135,7 +135,7 @@ The implementation would be something like the following code:
 
 ```python
 
-from charms.data_platform_libs.v1.data_interfaces import (
+from data_platform_helpers.interfaces import (
     RequirerCommonModel,
     RequirerDataContractV1,
     ResourceCreatedEvent,
@@ -201,7 +201,7 @@ Following an example of using the ResourceRequestedEvent, in the context of the
 database charm code:
 
 ```python
-from charms.data_platform_libs.v1.data_interfaces import (
+from data_platform_helpers.interfaces import (
     ResourceProviderEventHandler,
     ResourceProviderModel,
     ResourceRequestedEvent,
