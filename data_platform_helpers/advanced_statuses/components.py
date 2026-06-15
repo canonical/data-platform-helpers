@@ -26,7 +26,7 @@ from data_platform_helpers.advanced_statuses.models import (
     StatusObject,
     StatusObjectList,
 )
-from data_platform_helpers.advanced_statuses.types import Scope
+from data_platform_helpers.advanced_statuses.types import ExtendedScope, Scope
 
 logger = getLogger(__name__)
 
@@ -74,20 +74,16 @@ class StatusesState(Object):
             case "unit":
                 return self.relation.data[self.model.unit]
 
-    def add(self, status: StatusObject, scope: Scope, component: str) -> None:
-        """Adds a status to the component."""
-        if scope == "app" and not self.model.unit.is_leader():
-            logger.warning("Cannot add app status on a non-leader unit.")
-            return
+    def _add_for_scope(self, status: StatusObject, scope: Scope, component: str):
+        """Adds for a specific scope."""
         if (databag := self._databag(scope)) is None:
-            logger.warning(
+            logger.debug(
                 "No databag present for statuses, the status could not be persisted for use in next events."
             )
             return
         current_data = StatusObjectList.model_validate_json(databag.get(component, "[]"))
 
         if status in current_data.root:
-            logger.debug("Not inserting %s already present in databag.", status.model_dump())
             return
 
         # Insert already sorted, we want to have it by decreasing priority so
@@ -98,34 +94,48 @@ class StatusesState(Object):
             status,
             key=lambda status: -PRIORITIES.get(status.status, 0),
         )
-        logger.debug(f"{current_data=}")
         databag.update({component: current_data.model_dump_json()})
 
-    def set(self, status: StatusObject, scope: Scope, component: str) -> None:
-        """Sets component to a specific status.
-
-        This overrides all statuses in the databag.
-        """
-        if scope == "app" and not self.model.unit.is_leader():
-            logger.warning("Cannot set app status on a non-leader unit.")
+    def add(self, status: StatusObject, scope: ExtendedScope, component: str) -> None:
+        """Adds a status to the component."""
+        if scope == "all":
+            if self.unit.is_leader():
+                self._add_for_scope(status, "app", component)
+            self._add_for_scope(status, "unit", component)
             return
+        if scope == "app" and not self.model.unit.is_leader():
+            logger.info("Cannot add app status on a non-leader unit.")
+            return
+        self._add_for_scope(status, scope, component)
+
+    def _set_for_scope(self, status: StatusObject, scope: Scope, component: str):
+        """Sets status for a specific scope."""
         if (databag := self._databag(scope)) is None:
-            logger.warning(
+            logger.debug(
                 "No databag present for statuses, the status could not be persisted for use in next events."
             )
             return
         databag.update({component: StatusObjectList(root=[status]).model_dump_json()})
 
-    def delete(self, status: StatusObject, scope: Scope, component: str) -> None:
-        """Deletes a status from the component.
+    def set(self, status: StatusObject, scope: ExtendedScope, component: str) -> None:
+        """Sets component to a specific status.
 
-        If the status is not present, log this information.
+        This overrides all statuses in the databag.
         """
-        if scope == "app" and not self.model.unit.is_leader():
-            logger.warning("Cannot delete app status on a non-leader unit.")
+        if scope == "all":
+            if self.unit.is_leader():
+                self._set_for_scope(status, "app", component)
+            self._set_for_scope(status, "unit", component)
             return
+        if scope == "app" and not self.model.unit.is_leader():
+            logger.info("Cannot set app status on a non-leader unit.")
+            return
+        self._set_for_scope(status, scope, component)
+
+    def _delete_for_scope(self, status: StatusObject, scope: Scope, component: str):
+        """Deletes a status for a specific scope."""
         if (databag := self._databag(scope)) is None:
-            logger.warning(
+            logger.debug(
                 "No databag present for statuses, the status could not be persisted for use in next events."
             )
             return
@@ -134,22 +144,46 @@ class StatusesState(Object):
             current_data.remove(status)
             databag.update({component: current_data.model_dump_json()})
         except ValueError:
-            logger.warning(
-                f"Tried to delete status {status} in scope {scope} but it was not present"
-            )
+            logger.debug(f"Tried to delete status {status} in scope {scope} but it was not present")
             return
 
-    def clear(self, scope: Scope, component: str) -> None:
-        """Clears all statuses from the component."""
-        if scope == "app" and not self.model.unit.is_leader():
-            logger.warning("Cannot clear app status on a non-leader unit.")
+    def delete(self, status: StatusObject, scope: ExtendedScope, component: str) -> None:
+        """Deletes a status from the component.
+
+        If the status is not present, log this information.
+        """
+        if scope == "all":
+            if self.unit.is_leader():
+                self._delete_for_scope(status, "app", component)
+            self._delete_for_scope(status, "unit", component)
             return
+
+        if scope == "app" and not self.model.unit.is_leader():
+            logger.debug("Cannot delete app status on a non-leader unit.")
+            return
+
+        self._delete_for_scope(status, scope, component)
+
+    def _clear_for_scope(self, scope: Scope, component: str):
+        """Clears all statuses for a specific scope."""
         if (databag := self._databag(scope)) is None:
-            logger.warning(
+            logger.debug(
                 "No databag present for statuses, the status could not be persisted for use in next events."
             )
             return
         databag.update({component: "[]"})
+
+    def clear(self, scope: ExtendedScope, component: str) -> None:
+        """Clears all statuses from the component."""
+        if scope == "all":
+            if self.unit.is_leader():
+                self._clear_for_scope("app", component)
+            self._clear_for_scope("unit", component)
+            return
+        if scope == "app" and not self.model.unit.is_leader():
+            logger.info("Cannot clear app status on a non-leader unit.")
+            return
+        self._clear_for_scope(scope, component)
 
     def get(
         self,
@@ -167,7 +201,7 @@ class StatusesState(Object):
          * running_status_type: If we want running statuses, which kind?
         """
         if (databag := self._databag(scope)) is None:
-            logger.warning("No databag present for statuses, information lost for next events.")
+            logger.debug("No databag present for statuses, information lost for next events.")
             return StatusObjectList(root=[])
         current_data = StatusObjectList.model_validate_json(databag.get(component, "[]"))
 

@@ -39,15 +39,24 @@ class <>Manager(ManagerStatusProtocol):
             self.status_component.add(<Manager>Statuses.<Z>, scope=Scope.APP, component=self.name)
 """
 
-from typing import Protocol, runtime_checkable
+from abc import ABC, abstractmethod
+from typing import Generic, Protocol, TypeVar, runtime_checkable
 
 from data_platform_helpers.advanced_statuses.components import StatusesState
 from data_platform_helpers.advanced_statuses.models import StatusObject
 from data_platform_helpers.advanced_statuses.types import Scope
 
+T = TypeVar("T", bound="AbstractStatusesState", covariant=True)
+
 
 @runtime_checkable
 class StatusesStateProtocol(Protocol):
+    """This is a very simple protocol to force a state to define a status state."""
+
+    statuses: StatusesState
+
+
+class AbstractStatusesState(ABC):
     """This is a very simple protocol to force a state to define a status state."""
 
     statuses: StatusesState
@@ -61,6 +70,24 @@ class ManagerStatusProtocol(Protocol):
     state: StatusesStateProtocol
     name: str
 
+    def get_statuses(self, scope: Scope, recompute: bool = False) -> list[StatusObject]:
+        """Forces subclasses to implement get_statuses.
+
+        This function gets all feasible statuses for a component (or lib if
+        not single kernel) - excluding blocking running statuses.
+        It should recompute the statuses if recompute is true.
+        """
+        ...
+
+
+class AbstractManagerStatus(ABC, Generic[T]):
+    """This is a very simple protocol used to classes to implement some methods and attributes."""
+
+    # Force subclasses to initialise status component
+    state: T
+    name: str
+
+    @abstractmethod
     def get_statuses(self, scope: Scope, recompute: bool = False) -> list[StatusObject]:
         """Forces subclasses to implement get_statuses.
 

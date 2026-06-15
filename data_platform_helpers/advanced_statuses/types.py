@@ -8,3 +8,5 @@ from typing import (
 )
 
 Scope: TypeAlias = Literal["unit", "app"]
+
+ExtendedScope: TypeAlias = Literal["unit", "app", "all"]
