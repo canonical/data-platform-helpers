@@ -104,7 +104,7 @@ class StatusesState(Object):
             self._add_for_scope(status, "unit", component)
             return
         if scope == "app" and not self.model.unit.is_leader():
-            logger.info("Cannot add app status on a non-leader unit.")
+            logger.debug("Cannot add app status on a non-leader unit.")
             return
         self._add_for_scope(status, scope, component)
 
@@ -128,7 +128,7 @@ class StatusesState(Object):
             self._set_for_scope(status, "unit", component)
             return
         if scope == "app" and not self.model.unit.is_leader():
-            logger.info("Cannot set app status on a non-leader unit.")
+            logger.debug("Cannot set app status on a non-leader unit.")
             return
         self._set_for_scope(status, scope, component)
 
@@ -181,7 +181,7 @@ class StatusesState(Object):
             self._clear_for_scope("unit", component)
             return
         if scope == "app" and not self.model.unit.is_leader():
-            logger.info("Cannot clear app status on a non-leader unit.")
+            logger.debug("Cannot clear app status on a non-leader unit.")
             return
         self._clear_for_scope(scope, component)
 
