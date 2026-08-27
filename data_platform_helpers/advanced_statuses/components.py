@@ -99,7 +99,7 @@ class StatusesState(Object):
     def add(self, status: StatusObject, scope: ExtendedScope, component: str) -> None:
         """Adds a status to the component."""
         if scope == "all":
-            if self.unit.is_leader():
+            if self.model.unit.is_leader():
                 self._add_for_scope(status, "app", component)
             self._add_for_scope(status, "unit", component)
             return
@@ -123,7 +123,7 @@ class StatusesState(Object):
         This overrides all statuses in the databag.
         """
         if scope == "all":
-            if self.unit.is_leader():
+            if self.model.unit.is_leader():
                 self._set_for_scope(status, "app", component)
             self._set_for_scope(status, "unit", component)
             return
@@ -153,7 +153,7 @@ class StatusesState(Object):
         If the status is not present, log this information.
         """
         if scope == "all":
-            if self.unit.is_leader():
+            if self.model.unit.is_leader():
                 self._delete_for_scope(status, "app", component)
             self._delete_for_scope(status, "unit", component)
             return
@@ -176,7 +176,7 @@ class StatusesState(Object):
     def clear(self, scope: ExtendedScope, component: str) -> None:
         """Clears all statuses from the component."""
         if scope == "all":
-            if self.unit.is_leader():
+            if self.model.unit.is_leader():
                 self._clear_for_scope("app", component)
             self._clear_for_scope("unit", component)
             return
